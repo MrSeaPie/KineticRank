@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 6451f68ac087a6546bc90e19e34ad4f9
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - board: {instanceID: 0}
+  - redTokenPrefab: {fileID: 4789882319069501636, guid: a0d33b839547e3547869ab3728c34661, type: 3}
+  - blueTokenPrefab: {fileID: 3350200604938619675, guid: 012dbde27fcabb84394476bd3940a929, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
