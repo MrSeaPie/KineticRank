@@ -2,96 +2,89 @@
 
 public class BoardManager : MonoBehaviour
 {
-    // ───────────────── Grid settings ─────────────────
-    [Header("Grid settings")]
+    /* ─── grid size ─── */
     public int columns = 7;
     public int rows    = 6;
 
-    // ───────────────── Prefabs & parent ──────────────
-    [Header("Prefabs")]
+    /* ─── prefabs ─── */
     public GameObject boardTilePrefab;
     public GameObject redTokenPrefab;
     public GameObject blueTokenPrefab;
-    public Transform  boardParent;
+    public Transform  boardParent;        // holds tiles + tokens
 
-    // ───────────────── Origin ─────────────────────────
-    // Bottom-left world-space corner of the board.
-    // Change these numbers once if you want to move the whole board.
-    [Header("Origin (bottom-left)")]
-    public Vector2 origin = new Vector2(-3.5f, -2.5f);
+    /* ─── runtime state ─── */
+    GameObject[,] tokenGrid;              // null = empty
+    public const float tileStep = 1f;     // distance (world units) between columns
+    public const float originX  = 0.5f;   // x-coord of the centre of column 0
 
-    // Keeps track of which token sits in each slot
-    private GameObject[,] tokenGrid;
-
-    // ───────────────── Unity life-cycle ───────────────
     void Start()
     {
         tokenGrid = new GameObject[columns, rows];
         GenerateBoard();
     }
 
-    // ───────────────── Board generation ───────────────
     void GenerateBoard()
     {
         for (int x = 0; x < columns; x++)
+        for (int y = 0; y < rows;    y++)
         {
-            for (int y = 0; y < rows; y++)
-            {
-                // centre-of-square position
-                Vector2 pos = origin + new Vector2(x + 0.5f, y + 0.5f);
-
-                GameObject tile = Instantiate(boardTilePrefab, pos, Quaternion.identity);
-                if (boardParent != null) tile.transform.SetParent(boardParent, false);
-            }
+            Vector2 pos = GridToWorld(x, y);
+            var tile = Instantiate(boardTilePrefab, pos, Quaternion.identity);
+            if (boardParent) tile.transform.SetParent(boardParent, false);
         }
     }
 
-    // ───────────────── Public API ─────────────────────
-    /// <summary>
-    /// Called by PlayerController. Spawns a token in the column;
-    /// returns true if anything was placed (false if the column is full).
-    /// </summary>
-    public bool PlaceToken(int column, GameObject tokenPrefab)
+    /* convert grid → world & vice-versa */
+    public static Vector2 GridToWorld(int x, int y) => new(originX + x * tileStep, y + 0.5f);
+    public static int WorldToColumn(float worldX)   => Mathf.RoundToInt((worldX - originX) / tileStep);
+
+    /* ───────────────── PlaceToken ───────────────── */
+    public bool PlaceToken(int column, GameObject prefab)
     {
-        // 1. Search from bottom row up for an empty slot
+        if (column < 0 || column >= columns) return false;
+
+        /* full column? → pop bottom + shift down */
+        if (tokenGrid[column, rows - 1] != null)
+        {
+            if (tokenGrid[column, 0]) Destroy(tokenGrid[column, 0]);
+            for (int r = 1; r < rows; r++)
+            {
+                tokenGrid[column, r - 1] = tokenGrid[column, r];
+                if (tokenGrid[column, r - 1])
+                {
+                    var p = tokenGrid[column, r - 1].transform.position;
+                    p.y -= tileStep;
+                    tokenGrid[column, r - 1].GetComponent<Token>().AnimateFall(p);
+                }
+            }
+            tokenGrid[column, rows - 1] = null;   // top slot now free
+        }
+
+        /* find first empty slot */
         for (int y = 0; y < rows; y++)
         {
             if (tokenGrid[column, y] == null)
             {
-                // 2. Spawn the token
-                Vector2 spawnPos  = origin + new Vector2(column + 0.5f, y + 0.5f);   // NEW
-                GameObject token  = Instantiate(tokenPrefab, spawnPos, Quaternion.identity);
-                if (boardParent != null) token.transform.SetParent(boardParent, false);
+                Vector2 spawnPos  = GridToWorld(column, rows + 2);   // start well above
+                Vector2 targetPos = GridToWorld(column, y);
 
-                // 2b. Tell the token to animate its fall
-                Token tokenScript = token.GetComponent<Token>();
-                Vector3 targetPos = origin + new Vector2(column + 0.5f, y + 0.5f);   // NEW
-                tokenScript.AnimateFall(targetPos);
+                var tok = Instantiate(prefab, spawnPos, Quaternion.identity);
+                if (boardParent) tok.transform.SetParent(boardParent, false);
+                tok.GetComponent<Token>().AnimateFall(targetPos);
 
-                // 3. Remember it
-                tokenGrid[column, y] = token;
-
-                // 4. Notify GameManager
-                bool isRedToken = tokenPrefab == redTokenPrefab;
-                GameManager.Instance?.OnTokenPlaced(column, y, isRedToken);
-
-                return true;     // SUCCESS – only one return inside the loop
+                tokenGrid[column, y] = tok;
+                GameManager.Instance.OnTokenPlaced(column, y, prefab == redTokenPrefab);
+                return true;
             }
         }
-
-        Debug.Log("Column full");
-        return false;            // FAILURE – couldn't place
+        return false;            // ← should never happen
     }
 
-    // ───────────── Helpers used by GameManager ─────────
-    public bool WithinBounds(int x, int y)
+    /* helpers for GameManager */
+    public bool InBounds(int x, int y) => 0 <= x && x < columns && 0 <= y && y < rows;
+    public bool IsToken(int x, int y, bool isRed)
     {
-        return 0 <= x && x < columns && 0 <= y && y < rows;
-    }
-
-    public bool IsTokenColor(int x, int y, bool isRed)
-    {
-        GameObject t = tokenGrid[x, y];
-        return t != null && t.CompareTag(isRed ? "TokenRed" : "TokenBlue");
+        var t = tokenGrid[x, y];
+        return t && t.CompareTag(isRed ? "TokenRed" : "TokenBlue");
     }
 }

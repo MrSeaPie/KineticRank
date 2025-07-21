@@ -133,13 +133,14 @@ GameObject:
   - component: {fileID: 72512982}
   - component: {fileID: 72512984}
   - component: {fileID: 72512983}
+  - component: {fileID: 72512985}
   m_Layer: 5
   m_Name: WinBanner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &72512982
 RectTransform:
   m_ObjectHideFlags: 0
@@ -157,7 +158,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -60}
-  m_SizeDelta: {x: 600, y: 160}
+  m_SizeDelta: {x: 800, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &72512983
 MonoBehaviour:
@@ -256,6 +257,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 72512981}
   m_CullTransparentMesh: 1
+--- !u!114 &72512985
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 72512981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f82d66c23b8293543b11ec7cd5b9c480, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  label: {fileID: 72512983}
 --- !u!1 &135019518
 GameObject:
   m_ObjectHideFlags: 0
@@ -479,9 +493,6 @@ MonoBehaviour:
   board: {fileID: 2043986293}
   redTokenPrefab: {fileID: 4789882319069501636, guid: a0d33b839547e3547869ab3728c34661, type: 3}
   blueTokenPrefab: {fileID: 3350200604938619675, guid: 012dbde27fcabb84394476bd3940a929, type: 3}
-  boardLayer:
-    serializedVersion: 2
-    m_Bits: 256
 --- !u!4 &1625455326
 Transform:
   m_ObjectHideFlags: 0
@@ -645,8 +656,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   board: {fileID: 2043986293}
   player: {fileID: 1625455325}
-  winBanner: {fileID: 72512983}
-  redTurn: 1
+  winBanner: {fileID: 72512985}
 --- !u!1 &2043986290
 GameObject:
   m_ObjectHideFlags: 0
@@ -698,7 +708,6 @@ MonoBehaviour:
   redTokenPrefab: {fileID: 4789882319069501636, guid: a0d33b839547e3547869ab3728c34661, type: 3}
   blueTokenPrefab: {fileID: 3350200604938619675, guid: 012dbde27fcabb84394476bd3940a929, type: 3}
   boardParent: {fileID: 910611769}
-  origin: {x: -3.5, y: -2.5}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
