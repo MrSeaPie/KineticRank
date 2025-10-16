@@ -3,7 +3,13 @@ guid: 33f63e8182d292041a43198e4af5bee8
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - boardTilePrefab: {fileID: 2111919285239546373, guid: cdfb2d3d8fb5ed54dbab5db0942004d7, type: 3}
+  - redTokenPrefab: {fileID: 4789882319069501636, guid: a0d33b839547e3547869ab3728c34661, type: 3}
+  - blueTokenPrefab: {fileID: 3350200604938619675, guid: 012dbde27fcabb84394476bd3940a929, type: 3}
+  - queenTokenPrefab: {fileID: 4789882319069501636, guid: 398661fac810ecd45981208a74994185, type: 3}
+  - cleanerTokenPrefab: {fileID: 4789882319069501636, guid: 406c78d0098bd384f85c1e4a7cb608f3, type: 3}
+  - boardParent: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

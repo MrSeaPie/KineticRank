@@ -7,6 +7,10 @@ MonoImporter:
   - board: {instanceID: 0}
   - redTokenPrefab: {fileID: 4789882319069501636, guid: a0d33b839547e3547869ab3728c34661, type: 3}
   - blueTokenPrefab: {fileID: 3350200604938619675, guid: 012dbde27fcabb84394476bd3940a929, type: 3}
+  - redQueenPrefab: {fileID: 4789882319069501636, guid: 398661fac810ecd45981208a74994185, type: 3}
+  - blueQueenPrefab: {fileID: 4789882319069501636, guid: 45d2b487fb8efb542a9d0791d2f4ae0e, type: 3}
+  - redCleanerPrefab: {fileID: 4789882319069501636, guid: 406c78d0098bd384f85c1e4a7cb608f3, type: 3}
+  - blueCleanerPrefab: {fileID: 4789882319069501636, guid: 78646cf8f3680c249833bc02e0f5b316, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
