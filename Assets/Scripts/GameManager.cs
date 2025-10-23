@@ -1,14 +1,16 @@
-﻿using UnityEngine;
+﻿// File: Assets/Scripts/GameManager.cs  (FULL FILE REPLACEMENT)
+using UnityEngine;
 using UnityEngine.UI;      // only for Color
+using System.Collections; // for coroutine delay
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
     [Header("Scene references — drag in Inspector")]
-    public BoardManager     board;      // the BoardManager in the Hierarchy
-    public PlayerController player;     // the PlayerController in the Hierarchy
-    public WinBanner        winBanner;  // the WinBanner (child of Canvas)
+    public BoardManager     board;
+    public PlayerController player;
+    public WinBanner        winBanner;
 
     void Awake() => Instance = this;
 
@@ -17,22 +19,13 @@ public class GameManager : MonoBehaviour
      *===================================================================*/
     public void OnTokenPlaced(int x, int y, bool isRed)
     {
-        // Quick local check (around the brand-new piece) – catches 95 % of wins
-        if (ScanAround(x, y, isRed))
-        {
-            DeclareWinner(isRed);
-            return;
-        }
-
-        // Full sweep – catches wins formed by the column push
-        if (ScanWholeBoard(out bool redWon))
-            DeclareWinner(redWon);
+        if (ScanAround(x, y, isRed)) { DeclareWinner(isRed); return; }
+        if (ScanWholeBoard(out bool redWon)) { DeclareWinner(redWon); }
     }
 
     /*──────────────────────────────────────────── helpers ───────────────*/
 
-    #region   win detection ------------------------------------------------------------------
-
+    #region win detection
     bool ScanAround(int x, int y, bool red)
     {
         Vector2Int[] dirs = { new(1,0), new(0,1), new(1,1), new(1,-1) };
@@ -74,10 +67,26 @@ public class GameManager : MonoBehaviour
 
     void DeclareWinner(bool red)
     {
-        winBanner.Show(red ? "RED wins!" : "BLUE wins!",
-                       red ? Color.red  : Color.cyan);
+        // Update ELO silently
+        SaveManager.RecordMatch(red);
+        EloHud.RefreshAll();
 
-        // stop further clicks
+        // Show win text
+        string msg = red ? "RED wins!" : "BLUE wins!";
+        winBanner.Show(msg, red ? Color.red : Color.cyan);
+
+        // Disable input
         player.enabled = false;
+
+        // NEW: after short delay, append rematch hint
+        StartCoroutine(ShowRematchHint());
+    }
+
+    IEnumerator ShowRematchHint()
+    {
+        yield return new WaitForSeconds(1.5f);
+
+        // append hint only if banner still active
+        winBanner.AppendHint("Press Enter for rematch");
     }
 }
