@@ -2,10 +2,12 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\.gitattributes
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\.gitignore
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\.vsconfig
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assembly-CSharp.csproj
-C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\DEV_NOTES.md.txt
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\DEV_NOTES.md
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\KineticRank.sln
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\README.md.txt
-C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\START_HERE.md.txt
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\REPO_FILE_LIST.txt
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\REPO_TREE.txt
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\START_HERE.md
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Art.meta
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Audio.meta
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Prefabs.meta
@@ -38,10 +40,18 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scenes\Sa
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scenes\SampleScene.unity.meta
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\BoardManager.cs
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\BoardManager.cs.meta
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\EloHud.cs
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\EloHud.cs.meta
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\GameManager.cs
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\GameManager.cs.meta
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\PlayAgainControls.cs
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\PlayAgainControls.cs.meta
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\PlayerController.cs
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\PlayerController.cs.meta
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\RankedControls.cs
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\RankedControls.cs.meta
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\SaveManager.cs
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\SaveManager.cs.meta
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\Token.cs
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\Token.cs.meta
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Assets\Scripts\WinBanner.cs
@@ -1166,6 +1176,7 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifact
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\2d\2dd5b54e0ce4e49ea72fc85903ab408a
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\2d\2ddc89f41fbe4351af797493d1f320f4
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\2e\2e017fc30f8540b7a86d04153deb1629
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\2e\2e0703d45eaf989e3ce17801fcca5e66
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\2e\2e0cca4831b92774cd98f28ea9cce5ce
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\2e\2e0fe4e58232eebdf17c47300f8a5c34
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\2e\2e1e12f6ec866e1a34e3eaf3544482e0
@@ -1593,6 +1604,7 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifact
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\42\42cc930c64883750ba24f069024b99db
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\42\42daa26eeb97a739afaf541fe4be948d
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\43\4321aaa5899b3d117c09f23e4991ea9d
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\43\4321ba644f5fb467ce0d4a7f302aa95f
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\43\4325d2139016a8b047c406003e84bcc0
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\43\4326f71a6d36c58c9b8942c7fb59f040
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\43\433621f3ff43f39d80d303ad6a4b9d44
@@ -2580,6 +2592,7 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifact
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\72\72ab0f73eefe9868a4d1f2d4b6c64718
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\72\72aeb3bc9454e52acd971f57c0dd15f6
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\72\72afbe698742c96afce1231d62a37c48
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\72\72c347d67effb8176e8b198929f2a571
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\72\72e599e18e4bc88d2b686c248a3ba2df
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\72\72ee173525b83b126e4c6393c1652660
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\73\73091ec453308887697fb632b774b35d
@@ -3563,6 +3576,7 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifact
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\a2\a28d55493875fa3a9a8aae5314d5b5b0
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\a2\a290e4675f039a3f25fbcf8df724e374
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\a2\a29e5e69f9589ee60de6a2f6eb9e4eb2
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\a2\a2a88533fc51d9bcccda0983eef91456
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\a2\a2a929970a420b850b2af9c818e2c989
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\a2\a2abc95987466b4f0bbf1388f208bafa
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\a2\a2b10aa7662fe56bde38f89751e8a8ba
@@ -4759,6 +4773,7 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifact
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\db\db54c22d2473bb8d013624e142d71618
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\db\db5bf9044472d2a6a0cfc757d3460089
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\db\db6932927f49c5f3e28312192df31fbb
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\db\db7badfbb3edca443bceee55ece569e1
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\db\db7f8b1ee2619f742b8ef20a962a6123
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\db\db8a147cc48f3c2ed4902bd8c961967c
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\db\db8a4e7571a428624d13d8f5d684c121
@@ -5024,6 +5039,7 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifact
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\e7\e7803d2c6437730adad509d63c9e05ae
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\e7\e78c2e9373180d8c751e0c74f46a3492
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\e7\e78f7a1d91fc92cf676840330ca71f18
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\e7\e7986f2d100e33c1db8dcbd3b7381999
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\e7\e7a318efcb33d429f782abc261f88a5c
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\e7\e7ac267bd2ee7b101f45dce173b9af70
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\e7\e7acd1a9fc54687f81cee3d885fbff46
@@ -5224,6 +5240,7 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifact
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f2\f217020d7ea2beddad04aeeb763bb006
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f2\f23c054b1675dee2975fcb0e0d51c986
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f2\f2405e357abad7732b10e9842311d479
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f2\f2712358781b4d3accd2850796e295e9
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f2\f2759cab3dfdc271f22eb54043d86aa4
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f2\f28d625bed54bc0c7d528567c86134c1
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f2\f291a6e44166cb300beb9b3a33658a55
@@ -5326,6 +5343,7 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifact
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f7\f729a2a452183478f030ed98c3276e63
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f7\f72c5044592e3a2e864b7966e3ae2700
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f7\f73614fc2748b86357f54a0f4d9d22dd
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f7\f742ea970e02b3dab5d5c6d57dab11b4
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f7\f74a2135933bed4afa3426fdb45d8d68
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f7\f76a807aa8ad8d8f7896d5f616bb5299
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f7\f77b3a5f7a2ee64b13aa63fdb1b11532
@@ -5341,6 +5359,7 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifact
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f8\f8436c086257c572867e04c1ffbd1e87
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f8\f84a4f9ef71a21ac13f0864edfbdf50a
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f8\f852e0f0f0416b026cc0d123b6bf7b39
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f8\f86fa1fb52075b7d63c4f805eb2b1b9d
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f8\f879c3a0eab9137d4afacee0082b45d8
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f8\f896ef524c9806489f9b8935f939a5f9
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Artifacts\f8\f89b3800d09b743131a914a65621c92f
@@ -5516,6 +5535,7 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\1900
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\1900b0aE.dag.payloads
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\1900b0aE.dag_derived
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\1900b0aE.dag_fsmtime
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\backend1.traceevents
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\backend2.traceevents
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\bee_backend.info
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\buildprogram0.traceevents
@@ -5523,6 +5543,7 @@ C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\full
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\tundra.digestcache
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\tundra.log.json
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\TundraBuildState.state
+C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\TundraBuildState.state.map
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\artifacts\1900b0aE.dag\Assembly-CSharp.dll
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\artifacts\1900b0aE.dag\Assembly-CSharp.dll.mvfrm
 C:\Users\Hassan\Documents\UnityProjects\KineticRank\KineticRank\Library\Bee\artifacts\1900b0aE.dag\Assembly-CSharp.dll.mvfrm.rsp
