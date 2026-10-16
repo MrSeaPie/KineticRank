@@ -76,11 +76,12 @@ public class RankedControls : MonoBehaviour
         toastRoutine = StartCoroutine(Toast(text, color, seconds));
     }
 
+    // Uses the banner's separate toast line, so the winner/draw result text is never overwritten or hidden.
     IEnumerator Toast(string text, Color color, float seconds)
     {
-        winBanner.Show(text, color);
+        winBanner.ShowToast(text, color);
         yield return new WaitForSecondsRealtime(seconds);
-        winBanner.Hide();
+        winBanner.HideToast();
         toastRoutine = null;
     }
 }
