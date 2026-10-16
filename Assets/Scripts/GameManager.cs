@@ -1,0 +1,99 @@
+﻿// File: Assets/Scripts/GameManager.cs  (FULL FILE REPLACEMENT — add win SFX)
+using UnityEngine;
+using UnityEngine.UI;      // only for Color
+using System.Collections; // for coroutine delay
+
+public class GameManager : MonoBehaviour
+{
+    public static GameManager Instance { get; private set; }
+
+    [Header("Scene references — drag in Inspector")]
+    public BoardManager     board;
+    public PlayerController player;
+    public WinBanner        winBanner;
+
+    [Header("UI (optional)")]
+    [Tooltip("Back to Menu button shown only after a win")]
+    public GameObject backToMenuButton;
+
+    void Awake()
+    {
+        Instance = this;
+        if (backToMenuButton != null)
+            backToMenuButton.SetActive(false);
+    }
+
+    public void OnTokenPlaced(int x, int y, bool isRed)
+    {
+        if (ScanAround(x, y, isRed)) { DeclareWinner(isRed); return; }
+        if (ScanWholeBoard(out bool redWon)) { DeclareWinner(redWon); }
+    }
+
+    #region win detection
+    bool ScanAround(int x, int y, bool red)
+    {
+        Vector2Int[] dirs = { new(1,0), new(0,1), new(1,1), new(1,-1) };
+        foreach (var d in dirs)
+        {
+            int n = 1 + CountDir(x,y, d.x, d.y, red)
+                      + CountDir(x,y,-d.x,-d.y, red);
+            if (n >= 4) return true;
+        }
+        return false;
+    }
+
+    bool ScanWholeBoard(out bool redWon)
+    {
+        for (int x = 0; x < board.columns; ++x)
+        for (int y = 0; y < board.rows;    ++y)
+        {
+            if (board.IsToken(x,y,true)  && ScanAround(x,y,true))  { redWon = true;  return true; }
+            if (board.IsToken(x,y,false) && ScanAround(x,y,false)) { redWon = false; return true; }
+        }
+        redWon = false;
+        return false;
+    }
+
+    int CountDir(int x, int y, int dx, int dy, bool red)
+    {
+        int c = 0;
+        while (true)
+        {
+            x += dx; y += dy;
+            if (!board.InBounds(x,y) || !board.IsToken(x,y,red)) break;
+            ++c;
+        }
+        return c;
+    }
+    #endregion
+
+    void DeclareWinner(bool red)
+    {
+        // Update ELO silently
+        SaveManager.RecordMatch(red);
+        EloHud.RefreshAll();
+
+        // Win SFX
+        AudioController.Instance.PlayWin(red);
+
+        // Show win text
+        string msg = red ? "RED wins!" : "BLUE wins!";
+        winBanner.Show(msg, red ? Color.red : Color.cyan);
+
+        // Disable input
+        player.enabled = false;
+
+        // Show back-to-menu button
+        if (backToMenuButton != null)
+            backToMenuButton.SetActive(true);
+
+        // Rematch hint after a short delay
+        StartCoroutine(ShowRematchHint());
+    }
+
+    System.Collections.IEnumerator ShowRematchHint()
+    {
+        yield return new WaitForSeconds(1.5f);
+        winBanner.AppendHint("Press Enter for rematch");
+    }
+}
