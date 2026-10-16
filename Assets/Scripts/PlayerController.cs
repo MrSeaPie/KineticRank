@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
@@ -22,11 +22,17 @@ public class PlayerController : MonoBehaviour
     enum PieceType { Normal, Queen, Cleaner }
     PieceType currentPiece = PieceType.Normal;
 
+    // Read-only state for HUD display
+    public bool IsRedTurn => isRedTurn;
+    public string CurrentPieceName => currentPiece.ToString();
+    public bool QueenAvailable(bool red)   => red ? !redQueenUsed   : !blueQueenUsed;
+    public bool CleanerAvailable(bool red) => red ? !redCleanerUsed : !blueCleanerUsed;
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.N)) currentPiece = PieceType.Normal;
-        if (Input.GetKeyDown(KeyCode.Q)) currentPiece = PieceType.Queen;
-        if (Input.GetKeyDown(KeyCode.C)) currentPiece = PieceType.Cleaner;
+        if (Input.GetKeyDown(KeyCode.Q)) TrySelect(PieceType.Queen);
+        if (Input.GetKeyDown(KeyCode.C)) TrySelect(PieceType.Cleaner);
 
         if (Input.GetMouseButtonDown(0))
         {
@@ -46,9 +52,8 @@ public class PlayerController : MonoBehaviour
                     break;
 
                 case PieceType.Queen:
-                    // one per player
-                    if (isRedTurn && redQueenUsed)   { Debug.Log("Red queen already used.");  return; }
-                    if (!isRedTurn && blueQueenUsed) { Debug.Log("Blue queen already used."); return; }
+                    // one per player (selection already rejects a used queen; kept as a safety net)
+                    if (!QueenAvailable(isRedTurn)) { currentPiece = PieceType.Normal; return; }
 
                     placed = board.PlaceQueen(col,
                                 isRedTurn ? redQueenPrefab : blueQueenPrefab,    // visual disc that drops
@@ -60,8 +65,7 @@ public class PlayerController : MonoBehaviour
                     break;
 
                 case PieceType.Cleaner:
-                    if (isRedTurn && redCleanerUsed)   { Debug.Log("Red cleaner already used.");  return; }
-                    if (!isRedTurn && blueCleanerUsed) { Debug.Log("Blue cleaner already used."); return; }
+                    if (!CleanerAvailable(isRedTurn)) { currentPiece = PieceType.Normal; return; }
 
                     placed = board.PlaceCleaner(col,
                                 isRedTurn ? redCleanerPrefab : blueCleanerPrefab);
@@ -79,5 +83,18 @@ public class PlayerController : MonoBehaviour
                 currentPiece = PieceType.Normal;
             }
         }
+    }
+
+    // Only select a power-up the current player still has; otherwise stay on Normal
+    void TrySelect(PieceType piece)
+    {
+        bool available = piece == PieceType.Queen ? QueenAvailable(isRedTurn) : CleanerAvailable(isRedTurn);
+        if (!available)
+        {
+            Debug.Log($"{(isRedTurn ? "Red" : "Blue")} {piece.ToString().ToLower()} already used.");
+            currentPiece = PieceType.Normal;
+            return;
+        }
+        currentPiece = piece;
     }
 }
