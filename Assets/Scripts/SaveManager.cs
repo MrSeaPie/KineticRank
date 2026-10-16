@@ -1,4 +1,3 @@
-﻿// File: Assets/Scripts/SaveManager.cs  (FULL FILE REPLACEMENT)
 using System;
 using System.IO;
 using UnityEngine;
@@ -8,74 +7,67 @@ public static class SaveManager
     [Serializable]
     public class RankedProfile
     {
-        // ELO + stats
         public int redElo = 1000;
         public int blueElo = 1000;
-        public int games = 0;
-        public int lastDeltaRed = 0;
-        public int lastDeltaBlue = 0;
-        public int redWins = 0;
-        public int blueWins = 0;
-
-        // Options (UI/UX)
-        public bool hudVisible = true;   // NEW: remember HUD visibility (default ON)
+        public int games;
+        public int lastDeltaRed;
+        public int lastDeltaBlue;
+        public int redWins;
+        public int blueWins;
+        public int draws;
+        public bool hudVisible = true;
     }
 
     static RankedProfile data;
-    static readonly int kFactor = 32;
+    const int kFactor = 32;
     static string SavePath => Path.Combine(Application.persistentDataPath, "kineticrank_ranked.json");
 
     static SaveManager() { Load(); }
 
-    // ───────────────── Public API ─────────────────
-
     public static void RecordMatch(bool redWon)
     {
-        EnsureLoaded();
+        RecordResult(redWon ? 1f : 0f);
+    }
 
+    public static void RecordDraw()
+    {
+        RecordResult(0.5f);
+    }
+
+    static void RecordResult(float redScore)
+    {
+        EnsureLoaded();
         int oldRed = data.redElo;
         int oldBlue = data.blueElo;
-
-        float expRed  = Expected(oldRed,  oldBlue);
-        float expBlue = Expected(oldBlue, oldRed);
-
-        int sRed  = redWon ? 1 : 0;
-        int sBlue = redWon ? 0 : 1;
-
-        int newRed  = Mathf.RoundToInt(oldRed  + kFactor * (sRed  - expRed));
-        int newBlue = Mathf.RoundToInt(oldBlue + kFactor * (sBlue - expBlue));
-
-        data.lastDeltaRed  = newRed  - oldRed;
-        data.lastDeltaBlue = newBlue - oldBlue;
-        data.redElo  = Mathf.Max(1, newRed);
-        data.blueElo = Mathf.Max(1, newBlue);
-        data.games  += 1;
-
-        if (redWon) data.redWins += 1; else data.blueWins += 1;
-
+        data.redElo = Mathf.Max(1, Mathf.RoundToInt(oldRed + kFactor * (redScore - Expected(oldRed, oldBlue))));
+        data.blueElo = Mathf.Max(1, Mathf.RoundToInt(oldBlue + kFactor * (1f - redScore - Expected(oldBlue, oldRed))));
+        // Report the actual change, including the rating floor.
+        data.lastDeltaRed = data.redElo - oldRed;
+        data.lastDeltaBlue = data.blueElo - oldBlue;
+        data.games++;
+        if (redScore == 1f) data.redWins++;
+        else if (redScore == 0f) data.blueWins++;
+        else data.draws++;
         Save();
     }
 
     public static void ResetRanked()
     {
-        // Preserve options like HUD visibility when resetting ranked stats
         bool keepHud = GetHudVisible();
-        data = new RankedProfile();
-        data.hudVisible = keepHud;
+        data = new RankedProfile { hudVisible = keepHud };
         Save();
     }
 
-    // Getters
-    public static int  GetRedElo()        { EnsureLoaded(); return data.redElo; }
-    public static int  GetBlueElo()       { EnsureLoaded(); return data.blueElo; }
-    public static int  GetGames()         { EnsureLoaded(); return data.games; }
-    public static int  GetLastDeltaRed()  { EnsureLoaded(); return data.lastDeltaRed; }
-    public static int  GetLastDeltaBlue() { EnsureLoaded(); return data.lastDeltaBlue; }
-    public static int  GetRedWins()       { EnsureLoaded(); return data.redWins; }
-    public static int  GetBlueWins()      { EnsureLoaded(); return data.blueWins; }
+    public static int GetRedElo() { EnsureLoaded(); return data.redElo; }
+    public static int GetBlueElo() { EnsureLoaded(); return data.blueElo; }
+    public static int GetGames() { EnsureLoaded(); return data.games; }
+    public static int GetLastDeltaRed() { EnsureLoaded(); return data.lastDeltaRed; }
+    public static int GetLastDeltaBlue() { EnsureLoaded(); return data.lastDeltaBlue; }
+    public static int GetRedWins() { EnsureLoaded(); return data.redWins; }
+    public static int GetBlueWins() { EnsureLoaded(); return data.blueWins; }
+    public static int GetDraws() { EnsureLoaded(); return data.draws; }
+    public static bool GetHudVisible() { EnsureLoaded(); return data.hudVisible; }
 
-    // NEW: HUD visibility option
-    public static bool GetHudVisible()    { EnsureLoaded(); return data.hudVisible; }
     public static void SetHudVisible(bool visible)
     {
         EnsureLoaded();
@@ -84,7 +76,11 @@ public static class SaveManager
         Save();
     }
 
-    // ───────────────── Internals ─────────────────
+    static float Expected(int rating, int opponent)
+    {
+        return 1f / (1f + Mathf.Pow(10f, ((float)opponent - rating) / 400f));
+    }
+
     static void EnsureLoaded()
     {
         if (data == null) Load();
@@ -95,12 +91,7 @@ public static class SaveManager
         try
         {
             if (File.Exists(SavePath))
-            {
-                var json = File.ReadAllText(SavePath);
-                // Fields missing in older files default to the class defaults (e.g., hudVisible = true)
-                var loaded = JsonUtility.FromJson<RankedProfile>(json);
-                data = loaded ?? new RankedProfile();
-            }
+                data = JsonUtility.FromJson<RankedProfile>(File.ReadAllText(SavePath)) ?? new RankedProfile();
             else
             {
                 data = new RankedProfile();
@@ -118,18 +109,11 @@ public static class SaveManager
     {
         try
         {
-            var json = JsonUtility.ToJson(data, prettyPrint: true);
-            File.WriteAllText(SavePath, json);
+            File.WriteAllText(SavePath, JsonUtility.ToJson(data, prettyPrint: true));
         }
         catch (Exception e)
         {
             Debug.LogWarning($"[SaveManager] Save failed: {e.Message}");
         }
-    }
-
-    static float Expected(int ra, int rb)
-    {
-        float expo = (rb - ra) / 400f;
-        return 1f / (1f + Mathf.Pow(10f, expo));
     }
 }
