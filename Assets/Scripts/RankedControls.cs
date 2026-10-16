@@ -1,5 +1,6 @@
 // File: Assets/Scripts/RankedControls.cs  (FULL FILE REPLACEMENT)
 using System.Collections;
+using KineticRank.Logic;
 using UnityEngine;
 
 public class RankedControls : MonoBehaviour
@@ -11,8 +12,16 @@ public class RankedControls : MonoBehaviour
     [Tooltip("How long to show the 'Ranked reset' toast")]
     public float toastSeconds = 1.25f;
 
+    [Tooltip("Second Backspace must come within this many seconds (unscaled) to confirm a ranked reset")]
+    public float resetConfirmSeconds = 2f;
+
+    ConfirmWindow resetConfirm;
+    Coroutine toastRoutine;
+
     void Awake()
     {
+        resetConfirm = new ConfirmWindow(resetConfirmSeconds);
+
         // Fallback: try find EloHUD by name if not linked
         if (!eloHudObject)
         {
@@ -27,16 +36,19 @@ public class RankedControls : MonoBehaviour
 
     void Update()
     {
-        // Reset ranked
+        // Reset ranked (Backspace twice within resetConfirmSeconds)
         if (Input.GetKeyDown(KeyCode.Backspace))
         {
-            SaveManager.ResetRanked();
-            EloHud.RefreshAll();
-
-            if (winBanner != null)
-                StartCoroutine(ToastRankedReset());
+            if (resetConfirm.Press(Time.unscaledTime))
+            {
+                SaveManager.ResetRanked();
+                EloHud.RefreshAll();
+                ShowToast("Ranked reset", Color.cyan, toastSeconds);
+            }
             else
-                Debug.Log("<color=#00FFFF>[Ranked]</color> Reset ELO (no WinBanner assigned)");
+            {
+                ShowToast("Press Backspace again to reset ranked", Color.yellow, resetConfirmSeconds);
+            }
         }
 
         // Toggle HUD visibility (H)
@@ -51,10 +63,24 @@ public class RankedControls : MonoBehaviour
         }
     }
 
-    IEnumerator ToastRankedReset()
+    void ShowToast(string text, Color color, float seconds)
     {
-        winBanner.Show("Ranked reset", Color.cyan);
-        yield return new WaitForSeconds(toastSeconds);
+        if (winBanner == null)
+        {
+            Debug.Log("<color=#00FFFF>[Ranked]</color> " + text + " (no WinBanner assigned)");
+            return;
+        }
+
+        // Restart instead of stacking, so an older toast cannot hide a newer one early.
+        if (toastRoutine != null) StopCoroutine(toastRoutine);
+        toastRoutine = StartCoroutine(Toast(text, color, seconds));
+    }
+
+    IEnumerator Toast(string text, Color color, float seconds)
+    {
+        winBanner.Show(text, color);
+        yield return new WaitForSecondsRealtime(seconds);
         winBanner.Hide();
+        toastRoutine = null;
     }
 }
