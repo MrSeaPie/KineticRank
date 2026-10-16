@@ -10,6 +10,7 @@ public class SceneFader : MonoBehaviour
     private Canvas _canvas;
     private Image _overlay;
     private CanvasGroup _group;
+    private bool _isFading;
 
     // Accessor that auto-creates the fader if missing.
     public static SceneFader Instance
@@ -26,6 +27,9 @@ public class SceneFader : MonoBehaviour
             return _instance;
         }
     }
+
+    // True while a fade-out/load/fade-in is running (does not auto-create the fader).
+    public static bool IsFading => _instance != null && _instance._isFading;
 
     void BuildOverlay()
     {
@@ -55,10 +59,13 @@ public class SceneFader : MonoBehaviour
     }
 
     /// <summary>
-    /// Cross-fade to a scene and back (fade-out -> load -> fade-in)
+    /// Cross-fade to a scene and back (fade-out -> load -> fade-in).
+    /// Ignored while a fade is already in progress, so repeated key presses cannot stack loads.
     /// </summary>
     public static void LoadScene(string sceneName, float duration = 0.3f)
     {
+        if (Instance._isFading) return;
+        Instance._isFading = true;
         Instance.StartCoroutine(Instance.FadeRoutine(sceneName, duration));
     }
 
@@ -87,5 +94,6 @@ public class SceneFader : MonoBehaviour
         }
         _group.alpha = 0f;
         _group.blocksRaycasts = false;
+        _isFading = false;
     }
 }
