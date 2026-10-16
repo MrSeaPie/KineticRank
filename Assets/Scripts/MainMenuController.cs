@@ -1,7 +1,8 @@
-// File: Assets/Scripts/MainMenuController.cs  (FULL FILE REPLACEMENT — with SFX + fade)
+// File: Assets/Scripts/MainMenuController.cs  (FULL FILE REPLACEMENT - with SFX + fade)
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using KineticRank.Logic;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -22,8 +23,17 @@ public class MainMenuController : MonoBehaviour
     [Tooltip("Name of the gameplay scene (e.g., 'Match')")]
     public string matchSceneName = "Match";
 
+    [Header("Reset Confirm")]
+    [Tooltip("Seconds allowed between the two reset presses (Backspace or Reset button)")]
+    public float resetConfirmSeconds = 2f;
+
+    ConfirmWindow resetConfirm;
+    bool showingResetPrompt;
+
     void Awake()
     {
+        resetConfirm = new ConfirmWindow(resetConfirmSeconds);
+
         if (playButton)  playButton.onClick.AddListener(Play);
         if (resetButton) resetButton.onClick.AddListener(ResetRanked);
         if (quitButton)  quitButton.onClick.AddListener(QuitGame);
@@ -36,6 +46,13 @@ public class MainMenuController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) Play();
         if (Input.GetKeyDown(KeyCode.Backspace)) ResetRanked();
         if (Input.GetKeyDown(KeyCode.Escape))     QuitGame();
+
+        // Restore the summary once the confirm window lapses without a second press
+        if (showingResetPrompt && !resetConfirm.IsArmed(Time.unscaledTime))
+        {
+            showingResetPrompt = false;
+            RefreshSummary();
+        }
     }
 
     void RefreshSummary()
@@ -50,9 +67,14 @@ public class MainMenuController : MonoBehaviour
         rankedSummary.text = $"RED {red} (W{rw})  |  BLUE {blue} (W{bw})";
     }
 
+    static void PlayClick()
+    {
+        if (AudioController.Instance != null) AudioController.Instance.PlayClick();
+    }
+
     public void Play()
     {
-        AudioController.Instance.PlayClick();
+        PlayClick();
         if (string.IsNullOrEmpty(matchSceneName))
         {
             Debug.LogWarning("[MainMenu] matchSceneName is empty.");
@@ -61,9 +83,20 @@ public class MainMenuController : MonoBehaviour
         SceneFader.LoadScene(matchSceneName, 0.3f);
     }
 
+    // First press arms the confirm window; a second press within resetConfirmSeconds resets
     public void ResetRanked()
     {
-        AudioController.Instance.PlayClick();
+        PlayClick();
+
+        if (!resetConfirm.Press(Time.unscaledTime))
+        {
+            showingResetPrompt = true;
+            if (rankedSummary) rankedSummary.text = "Press Backspace (or Reset) again to reset ranked";
+            else Debug.Log("[MainMenu] Press Backspace again to reset ranked.");
+            return;
+        }
+
+        showingResetPrompt = false;
         SaveManager.ResetRanked();
         RefreshSummary();
         EloHud.RefreshAll();
@@ -71,7 +104,7 @@ public class MainMenuController : MonoBehaviour
 
     public void QuitGame()
     {
-        AudioController.Instance.PlayClick();
+        PlayClick();
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #elif UNITY_WEBGL

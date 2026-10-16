@@ -1,4 +1,4 @@
-// File: Assets/Scripts/BackToMenuControls.cs  (FULL FILE REPLACEMENT — with SFX + fade)
+// File: Assets/Scripts/BackToMenuControls.cs  (FULL FILE REPLACEMENT - with SFX + fade)
 using UnityEngine;
 
 public class BackToMenuControls : MonoBehaviour
@@ -20,7 +20,10 @@ public class BackToMenuControls : MonoBehaviour
     // Called by button OnClick or via hotkey
     public void BackToMenuNow()
     {
-        AudioController.Instance.PlayClick();
+        // A fade is already running; ignore repeat presses so the click doesn't replay
+        if (SceneFader.IsFading) return;
+
+        if (AudioController.Instance != null) AudioController.Instance.PlayClick();
 
         if (string.IsNullOrEmpty(mainMenuSceneName))
         {
