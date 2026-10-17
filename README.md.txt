@@ -19,6 +19,9 @@ Moves resolve before another move can begin. Four-in-a-row is evaluated after re
 | Action | Input |
 |--------|-------|
 | Drop selected token | Left-click a column |
+| Select Normal token | N |
+| Select Queen token | Q |
+| Select Cleaner token | C |
 | Rematch | Enter |
 | Toggle rating HUD | H |
 | Reset local ranked statistics | Backspace |
