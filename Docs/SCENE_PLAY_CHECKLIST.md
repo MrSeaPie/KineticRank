@@ -19,7 +19,8 @@ Commit under test: ________  Tester: ________  Date: ________
 - [ ] A1. From Match, press M once: one click sound, one fade, MainMenu loads.
 - [ ] A2. From Match, press M rapidly 5+ times: still exactly one fade and one load, no extra click sounds after the first.
 - [ ] A3. From MainMenu, press Space or click Play: one click sound, one fade, Match loads.
-- [ ] A4. From MainMenu, click Play rapidly 5+ times: still exactly one fade and one load.
+- [ ] A4. Play the Match scene directly (no MainMenu first; AudioController may be absent): pressing M produces no NullReferenceException in the Console.
+- [ ] A5. From MainMenu, click Play rapidly 5+ times: still exactly one fade and one load.
 
 ## B. Rematch (Enter)
 - [ ] B1. After a win, press Enter once: Match reloads once and the board is empty.
@@ -28,7 +29,7 @@ Commit under test: ________  Tester: ________  Date: ________
 
 ## C. Ranked reset (Backspace / Reset button)
 - [ ] C1. Press Backspace once: toast asks for confirmation; Elo is unchanged.
-- [ ] C2. Press Backspace again within 2s: Elo resets to default, confirmed by toast.
+- [ ] C2. Press Backspace again within 2s: Elo resets; toast confirms; the result text (if a win banner is showing) is not overwritten.
 - [ ] C3. Press Backspace, wait more than 2s, press again: re-arms (confirmation toast again), no reset.
 - [ ] C4. Repeat C1-C3 with Time.timeScale = 0 (pause, if available): the window still expires on real time.
 - [ ] C5. In MainMenu, Backspace and the Reset button share one confirmation: one Backspace then one button click within 2s resets once.
@@ -36,9 +37,9 @@ Commit under test: ________  Tester: ________  Date: ________
 - [ ] C7. Restart the game after a reset: Elo stays reset (persistence via SaveManager).
 
 ## D. Power-up selection
-- [ ] D1. Press 2: Queen selected; HUD highlights Queen; next drop places Queen.
-- [ ] D2. Press 3: Cleaner selected; HUD highlights Cleaner; next drop clears column.
-- [ ] D3. Press 2 when Queen already used: toast warning, selection remains on current piece.
+- [ ] D1. Select Queen, drop it: selection returns to Normal after the drop.
+- [ ] D2. Try to select the same side's Queen again: selection stays/falls back to Normal.
+- [ ] D3. Same as D1-D2 for Cleaner.
 - [ ] D4. Red's spent Queen does not affect Blue's Queen availability.
 - [ ] D5. A normal drop after a spent power-up attempt places a Normal token and changes turn exactly once.
 
