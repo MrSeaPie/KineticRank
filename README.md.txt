@@ -27,7 +27,7 @@ Ratings and statistics are stored locally through `SaveManager`. These local rat
 
 ## Verification status
 
-The integrated move-resolution changes previously passed 36 EditMode tests and 5 PlayMode tests. After adding match-recording and disk-persistence regressions, the latest observed PlayMode XML reports 10 passed and 0 failed. These results describe separate observed runs, not a fresh run of both suites against the current revision.
+Both automated suites were run sequentially against integrated revision `0e537232b5685c3a3c0e8f400126e44784e0e6fd` on 2026-10-17. The observed XML results report 36/36 EditMode tests and 10/10 PlayMode tests passed, with zero failures in either suite. The PlayMode run includes match-recording and disk-persistence regressions.
 
 Interactive scene acceptance remains **NOT RUN**. Automated test results do not establish that scene presentation, controls, audio, and complete player flows work correctly in interactive play. Follow `Docs/SCENE_PLAY_CHECKLIST.md` and record actual results before release.
 
