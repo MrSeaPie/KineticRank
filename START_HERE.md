@@ -1,24 +1,16 @@
 # START HERE — KineticRank
 
-**Repo:** https://github.com/MrSeaPie/KineticRank  
-**Branch:** `queen-cleaner-mechanic`
+**Repo:** https://github.com/MrSeaPie/KineticRank
 
-Before doing anything:
-1) Read `README.md` — it describes the game, Unity version, and roadmap.
-2) Read `DEV_NOTES.md` — it defines the ground rules.
-3) Review `REPO_FILE_LIST.txt` and `REPO_TREE.txt` (project manifests).
-4) Inspect `Assets/` (especially `Assets/Scripts/`).
+Before making changes:
+1. Read `README.md.txt` for the game overview, Unity version, controls, and completion status.
+2. Read `DEV_NOTES.md` for development rules.
+3. Review `REPO_FILE_LIST.txt` and `REPO_TREE.txt` for the recorded project structure.
+4. Inspect the current files relevant to your change, especially under `Assets/Scripts/`.
+5. Read `Docs/SCENE_PLAY_CHECKLIST.md` for acceptance checks. Automated test results and interactive scene acceptance are separate evidence.
 
-**Rules:**
-- Do **not** invent files or folders.
-- Always cite exact file paths and lines from this repo.
-- Provide **full-file replacements** when changing code (never partial diffs).
-- Ask before changes if anything is unclear.
-- Go **one tiny step at a time**. No big jumps.
+Use Unity **2022.3.62f1**, as recorded in `ProjectSettings/ProjectVersion.txt`. The main match scene is `Assets/Scenes/Match.unity`.
 
-**Task pattern (example):**
-1. Confirm which file(s) you’ll modify.
-2. Paste the complete new file(s).
-3. Tell me the next single click/step to do in Unity.
+Work in your assigned branch and use the controller's review and merge process. Historical documentation naming `queen-cleaner-mechanic` does not identify the current working branch.
 
-> This project’s `README.md` and manifests are the permanent single source of truth.
+Keep changes small and grounded in inspected repository content. Provide full-file replacements through workspace actions. Update the manifests when adding or removing project files. Respect the owner's approval requirements for publishing, spending, and external accounts.
