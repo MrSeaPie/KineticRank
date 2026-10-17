@@ -43,6 +43,9 @@ public class MainMenuController : MonoBehaviour
 
     void Update()
     {
+        // Ignore menu keys while a scene load is fading out (no repeated clicks, no reset mid-load)
+        if (SceneFader.IsFading) return;
+
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) Play();
         if (Input.GetKeyDown(KeyCode.Backspace)) ResetRanked();
         if (Input.GetKeyDown(KeyCode.Escape))     QuitGame();
@@ -74,6 +77,8 @@ public class MainMenuController : MonoBehaviour
 
     public void Play()
     {
+        if (SceneFader.IsFading) return;
+
         PlayClick();
         if (string.IsNullOrEmpty(matchSceneName))
         {

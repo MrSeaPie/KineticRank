@@ -12,16 +12,17 @@ public class PlayAgainControls : MonoBehaviour
 
     void Update()
     {
-        if (!enableEnterToRestart || reloading) return;
+        // Also ignore Enter while another fade (e.g. Back to Menu) is already loading a scene
+        if (!enableEnterToRestart || reloading || SceneFader.IsFading) return;
 
         // Enter on main keyboard or numpad
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
         {
             reloading = true;
 
-            // Reload the currently active scene; ELO persists via SaveManager
+            // Reload the currently active scene through the fader so it shares the in-progress guard; ELO persists via SaveManager
             var active = SceneManager.GetActiveScene();
-            SceneManager.LoadScene(active.buildIndex);
+            SceneFader.LoadScene(active.name, 0.3f);
         }
     }
 }
