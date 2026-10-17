@@ -82,7 +82,7 @@ namespace KineticRank.Tests.EditMode
         {
             EloCalculator.CalculateMatch(
                 redElo: 10,
-                blueElo: 2000,
+                blueElo: 10,
                 redWon: false,
                 newRed: out int newRed,
                 newBlue: out _,
