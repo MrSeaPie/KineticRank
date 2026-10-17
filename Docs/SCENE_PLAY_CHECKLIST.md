@@ -45,5 +45,19 @@ Commit under test: ________  Tester: ________  Date: ________
 - [ ] F2. During a full-column downshift animation, input is ignored until all tokens settle.
 - [ ] F3. After a win, no further tokens can be placed.
 
+## G. Move resolution and outcome recording (pending Agent-01 serialized resolution, task tsk_0mvayxrjkcb10b805)
+Run only on a commit that contains Agent-01's resolution integration; before that, record every G item as NOT RUN.
+Write down the board state (screenshot or column-by-column) before and after each step.
+- [ ] G1. Normal drop into an empty column: the token lands in the bottom row, the turn changes exactly once, and the HUD shows the new side.
+- [ ] G2. Drop into a full column: the column downshift completes fully before the turn changes; the token count on the board is as expected (no lost or duplicated tokens).
+- [ ] G3. Queen drop: every flip completes before the next move is admitted; the turn changes exactly once after the last flip.
+- [ ] G4. Cleaner drop: the clear completes, remaining tokens settle, and only then does the turn change (exactly once).
+- [ ] G5. A move that creates a line for the mover: the win is declared only after resolution finishes, with the correct side on the win banner.
+- [ ] G6. A move whose resolution (flip/clear/downshift) creates a line for the opponent, or for both sides: record which side the game declares and whether it matches the rule Agent-01 documents. Record any mismatch as FAIL with the board state.
+- [ ] G7. After a win, exactly one Elo update is recorded: the Elo HUD changes once, and after restarting the game the persisted values match what the HUD showed.
+- [ ] G8. Win, then press Enter and M rapidly: still exactly one Elo update for that match.
+- [ ] G9. Fill the board with no line (if reachable): record what happens. SaveManager currently has no draw outcome, so record any missing draw handling as KNOWN GAP unless Agent-01's merge adds one.
+- [ ] G10. Play the same move sequence twice from an empty board: the resulting board and outcome are identical both times (no randomness in resolution).
+
 ## Notes / failures
 (Record Console errors verbatim with the step number.)
