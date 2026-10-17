@@ -42,11 +42,10 @@ public class GameManager : MonoBehaviour
         EvaluateBoard();
     }
 
-    // Compatibility callback while BoardManager integration is in progress.
+    // Legacy notifications cannot finish a move owned by BoardManager.ResolveMove.
     public void OnTokenPlaced(int x, int y, bool isRed)
     {
-        if (IsMatchOver) return;
-        IsResolvingMove = false;
+        if (IsInputLocked) return;
         EvaluateBoard();
     }
 

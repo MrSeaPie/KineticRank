@@ -11,6 +11,13 @@ public class Token : MonoBehaviour
         HasArrived = false;
     }
 
+    public void SettleAt(Vector2 targetWorldPos)
+    {
+        StopAllCoroutines();
+        transform.position = targetWorldPos;
+        HasArrived = true;
+    }
+
     public void AnimateFall(Vector2 targetWorldPos)
     {
         StopAllCoroutines();
