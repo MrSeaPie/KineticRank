@@ -11,9 +11,50 @@ public static class SaveManager
 
     static KineticRank.Logic.RankedProfile data;
     const int kFactor = 32;
-    static string SavePath => Path.Combine(Application.persistentDataPath, "kineticrank_ranked.json");
+    static string savePathOverride;
+    static string SavePath => savePathOverride ?? Path.Combine(Application.persistentDataPath, "kineticrank_ranked.json");
 
-    static SaveManager() { Load(); }
+#if UNITY_EDITOR || UNITY_INCLUDE_TESTS
+    // Install isolation before any profile access, including GameManager lifecycle calls.
+    public static IDisposable BeginIsolatedTestScope()
+    {
+        return new IsolatedTestScope();
+    }
+
+    sealed class IsolatedTestScope : IDisposable
+    {
+        readonly KineticRank.Logic.RankedProfile previousData;
+        readonly string previousPath;
+        readonly string isolatedPath;
+        bool disposed;
+
+        public IsolatedTestScope()
+        {
+            previousData = data;
+            previousPath = savePathOverride;
+            isolatedPath = Path.Combine(Application.temporaryCachePath,
+                "kineticrank_test_" + Guid.NewGuid().ToString("N") + ".json");
+            savePathOverride = isolatedPath;
+            data = null;
+        }
+
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+            data = previousData;
+            savePathOverride = previousPath;
+            try
+            {
+                if (File.Exists(isolatedPath)) File.Delete(isolatedPath);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[SaveManager] Test cleanup failed: {e.Message}");
+            }
+        }
+    }
+#endif
 
     public static void RecordMatch(bool redWon)
     {
