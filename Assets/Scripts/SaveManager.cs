@@ -1,27 +1,17 @@
-﻿// File: Assets/Scripts/SaveManager.cs  (FULL FILE REPLACEMENT)
+// File: Assets/Scripts/SaveManager.cs
 using System;
 using System.IO;
 using UnityEngine;
+using KineticRank.Logic;
 
 public static class SaveManager
 {
     [Serializable]
-    public class RankedProfile
+    public class RankedProfile : KineticRank.Logic.RankedProfile
     {
-        // ELO + stats
-        public int redElo = 1000;
-        public int blueElo = 1000;
-        public int games = 0;
-        public int lastDeltaRed = 0;
-        public int lastDeltaBlue = 0;
-        public int redWins = 0;
-        public int blueWins = 0;
-
-        // Options (UI/UX)
-        public bool hudVisible = true;   // NEW: remember HUD visibility (default ON)
     }
 
-    static RankedProfile data;
+    static KineticRank.Logic.RankedProfile data;
     static readonly int kFactor = 32;
     static string SavePath => Path.Combine(Application.persistentDataPath, "kineticrank_ranked.json");
 
@@ -32,36 +22,14 @@ public static class SaveManager
     public static void RecordMatch(bool redWon)
     {
         EnsureLoaded();
-
-        int oldRed = data.redElo;
-        int oldBlue = data.blueElo;
-
-        float expRed  = Expected(oldRed,  oldBlue);
-        float expBlue = Expected(oldBlue, oldRed);
-
-        int sRed  = redWon ? 1 : 0;
-        int sBlue = redWon ? 0 : 1;
-
-        int newRed  = Mathf.RoundToInt(oldRed  + kFactor * (sRed  - expRed));
-        int newBlue = Mathf.RoundToInt(oldBlue + kFactor * (sBlue - expBlue));
-
-        data.lastDeltaRed  = newRed  - oldRed;
-        data.lastDeltaBlue = newBlue - oldBlue;
-        data.redElo  = Mathf.Max(1, newRed);
-        data.blueElo = Mathf.Max(1, newBlue);
-        data.games  += 1;
-
-        if (redWon) data.redWins += 1; else data.blueWins += 1;
-
+        data.RecordMatch(redWon, kFactor);
         Save();
     }
 
     public static void ResetRanked()
     {
-        // Preserve options like HUD visibility when resetting ranked stats
-        bool keepHud = GetHudVisible();
-        data = new RankedProfile();
-        data.hudVisible = keepHud;
+        EnsureLoaded();
+        data.ResetRanked(preserveHud: true);
         Save();
     }
 
@@ -74,7 +42,7 @@ public static class SaveManager
     public static int  GetRedWins()       { EnsureLoaded(); return data.redWins; }
     public static int  GetBlueWins()      { EnsureLoaded(); return data.blueWins; }
 
-    // NEW: HUD visibility option
+    // HUD visibility option
     public static bool GetHudVisible()    { EnsureLoaded(); return data.hudVisible; }
     public static void SetHudVisible(bool visible)
     {
@@ -97,20 +65,19 @@ public static class SaveManager
             if (File.Exists(SavePath))
             {
                 var json = File.ReadAllText(SavePath);
-                // Fields missing in older files default to the class defaults (e.g., hudVisible = true)
-                var loaded = JsonUtility.FromJson<RankedProfile>(json);
-                data = loaded ?? new RankedProfile();
+                var loaded = JsonUtility.FromJson<KineticRank.Logic.RankedProfile>(json);
+                data = loaded ?? new KineticRank.Logic.RankedProfile();
             }
             else
             {
-                data = new RankedProfile();
+                data = new KineticRank.Logic.RankedProfile();
                 Save();
             }
         }
         catch (Exception e)
         {
             Debug.LogWarning($"[SaveManager] Load failed: {e.Message}");
-            data = new RankedProfile();
+            data = new KineticRank.Logic.RankedProfile();
         }
     }
 
@@ -129,7 +96,6 @@ public static class SaveManager
 
     static float Expected(int ra, int rb)
     {
-        float expo = (rb - ra) / 400f;
-        return 1f / (1f + Mathf.Pow(10f, expo));
+        return EloCalculator.ExpectedScore(ra, rb);
     }
 }
