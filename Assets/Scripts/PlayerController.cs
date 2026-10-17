@@ -30,6 +30,9 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (GameManager.Instance != null && (GameManager.Instance.IsInputLocked || GameManager.Instance.IsMatchOver))
+            return;
+
         if (Input.GetKeyDown(KeyCode.N)) currentPiece = PieceType.Normal;
         if (Input.GetKeyDown(KeyCode.Q)) TrySelect(PieceType.Queen);
         if (Input.GetKeyDown(KeyCode.C)) TrySelect(PieceType.Cleaner);

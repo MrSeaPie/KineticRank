@@ -39,6 +39,13 @@ public class RankedControls : MonoBehaviour
         // Reset ranked (Backspace twice within resetConfirmSeconds)
         if (Input.GetKeyDown(KeyCode.Backspace))
         {
+            if (GameManager.Instance != null && !GameManager.Instance.IsMatchOver)
+            {
+                resetConfirm.Cancel();
+                ShowToast("Finish the match before resetting ranked", Color.yellow, resetConfirmSeconds);
+                return;
+            }
+
             if (resetConfirm.Press(Time.unscaledTime))
             {
                 SaveManager.ResetRanked();
