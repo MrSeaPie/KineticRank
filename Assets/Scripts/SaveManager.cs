@@ -5,20 +5,11 @@ using UnityEngine;
 public static class SaveManager
 {
     [Serializable]
-    public class RankedProfile
+    public class RankedProfile : KineticRank.Logic.RankedProfile
     {
-        public int redElo = 1000;
-        public int blueElo = 1000;
-        public int games;
-        public int lastDeltaRed;
-        public int lastDeltaBlue;
-        public int redWins;
-        public int blueWins;
-        public int draws;
-        public bool hudVisible = true;
     }
 
-    static RankedProfile data;
+    static KineticRank.Logic.RankedProfile data;
     const int kFactor = 32;
     static string SavePath => Path.Combine(Application.persistentDataPath, "kineticrank_ranked.json");
 
@@ -26,35 +17,22 @@ public static class SaveManager
 
     public static void RecordMatch(bool redWon)
     {
-        RecordResult(redWon ? 1f : 0f);
+        EnsureLoaded();
+        data.RecordMatch(redWon, kFactor);
+        Save();
     }
 
     public static void RecordDraw()
     {
-        RecordResult(0.5f);
-    }
-
-    static void RecordResult(float redScore)
-    {
         EnsureLoaded();
-        int oldRed = data.redElo;
-        int oldBlue = data.blueElo;
-        data.redElo = Mathf.Max(1, Mathf.RoundToInt(oldRed + kFactor * (redScore - Expected(oldRed, oldBlue))));
-        data.blueElo = Mathf.Max(1, Mathf.RoundToInt(oldBlue + kFactor * (1f - redScore - Expected(oldBlue, oldRed))));
-        // Report the actual change, including the rating floor.
-        data.lastDeltaRed = data.redElo - oldRed;
-        data.lastDeltaBlue = data.blueElo - oldBlue;
-        data.games++;
-        if (redScore == 1f) data.redWins++;
-        else if (redScore == 0f) data.blueWins++;
-        else data.draws++;
+        data.RecordDraw(kFactor);
         Save();
     }
 
     public static void ResetRanked()
     {
-        bool keepHud = GetHudVisible();
-        data = new RankedProfile { hudVisible = keepHud };
+        EnsureLoaded();
+        data.ResetRanked(preserveHud: true);
         Save();
     }
 
@@ -76,11 +54,6 @@ public static class SaveManager
         Save();
     }
 
-    static float Expected(int rating, int opponent)
-    {
-        return 1f / (1f + Mathf.Pow(10f, ((float)opponent - rating) / 400f));
-    }
-
     static void EnsureLoaded()
     {
         if (data == null) Load();
@@ -91,17 +64,21 @@ public static class SaveManager
         try
         {
             if (File.Exists(SavePath))
-                data = JsonUtility.FromJson<RankedProfile>(File.ReadAllText(SavePath)) ?? new RankedProfile();
+            {
+                var json = File.ReadAllText(SavePath);
+                var loaded = JsonUtility.FromJson<KineticRank.Logic.RankedProfile>(json);
+                data = loaded ?? new KineticRank.Logic.RankedProfile();
+            }
             else
             {
-                data = new RankedProfile();
+                data = new KineticRank.Logic.RankedProfile();
                 Save();
             }
         }
         catch (Exception e)
         {
             Debug.LogWarning($"[SaveManager] Load failed: {e.Message}");
-            data = new RankedProfile();
+            data = new KineticRank.Logic.RankedProfile();
         }
     }
 
@@ -109,7 +86,8 @@ public static class SaveManager
     {
         try
         {
-            File.WriteAllText(SavePath, JsonUtility.ToJson(data, prettyPrint: true));
+            var json = JsonUtility.ToJson(data, prettyPrint: true);
+            File.WriteAllText(SavePath, json);
         }
         catch (Exception e)
         {
