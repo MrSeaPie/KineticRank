@@ -12,6 +12,7 @@ namespace KineticRank.Logic
         public int lastDeltaBlue = 0;
         public int redWins = 0;
         public int blueWins = 0;
+        public int draws = 0;
         public bool hudVisible = true;
 
         public void RecordMatch(bool redWon, int kFactor = EloCalculator.DefaultKFactor)
@@ -25,6 +26,17 @@ namespace KineticRank.Logic
             if (redWon) redWins += 1; else blueWins += 1;
         }
 
+        public void RecordDraw(int kFactor = EloCalculator.DefaultKFactor)
+        {
+            EloCalculator.CalculateDraw(redElo, blueElo, out int newRed, out int newBlue, out int deltaRed, out int deltaBlue, kFactor);
+            lastDeltaRed = deltaRed;
+            lastDeltaBlue = deltaBlue;
+            redElo = newRed;
+            blueElo = newBlue;
+            games += 1;
+            draws += 1;
+        }
+
         public void ResetRanked(bool preserveHud = true)
         {
             bool keepHud = hudVisible;
@@ -35,6 +47,7 @@ namespace KineticRank.Logic
             lastDeltaBlue = 0;
             redWins = 0;
             blueWins = 0;
+            draws = 0;
             hudVisible = preserveHud ? keepHud : true;
         }
     }

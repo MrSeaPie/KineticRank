@@ -90,8 +90,27 @@ namespace KineticRank.Tests.EditMode
                 deltaBlue: out _
             );
 
-            Assert.Less(10 + deltaRed, 1);
             Assert.AreEqual(EloCalculator.MinRating, newRed);
+            Assert.AreEqual(EloCalculator.MinRating - 10, deltaRed);
+        }
+
+        [Test]
+        public void CalculateDraw_EqualRatings_AppliesZeroDelta()
+        {
+            EloCalculator.CalculateDraw(
+                redElo: 1000,
+                blueElo: 1000,
+                newRed: out int newRed,
+                newBlue: out int newBlue,
+                deltaRed: out int deltaRed,
+                deltaBlue: out int deltaBlue,
+                kFactor: 32
+            );
+
+            Assert.AreEqual(0, deltaRed);
+            Assert.AreEqual(0, deltaBlue);
+            Assert.AreEqual(1000, newRed);
+            Assert.AreEqual(1000, newBlue);
         }
 
         [Test]

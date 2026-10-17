@@ -19,6 +19,7 @@ namespace KineticRank.Tests.EditMode
             Assert.AreEqual(0, profile.lastDeltaBlue);
             Assert.AreEqual(0, profile.redWins);
             Assert.AreEqual(0, profile.blueWins);
+            Assert.AreEqual(0, profile.draws);
             Assert.IsTrue(profile.hudVisible);
         }
 
@@ -31,6 +32,7 @@ namespace KineticRank.Tests.EditMode
             Assert.AreEqual(1, profile.games);
             Assert.AreEqual(1, profile.redWins);
             Assert.AreEqual(0, profile.blueWins);
+            Assert.AreEqual(0, profile.draws);
             Assert.AreEqual(16, profile.lastDeltaRed);
             Assert.AreEqual(-16, profile.lastDeltaBlue);
             Assert.AreEqual(1016, profile.redElo);
@@ -46,6 +48,7 @@ namespace KineticRank.Tests.EditMode
             Assert.AreEqual(1, profile.games);
             Assert.AreEqual(0, profile.redWins);
             Assert.AreEqual(1, profile.blueWins);
+            Assert.AreEqual(0, profile.draws);
             Assert.AreEqual(-16, profile.lastDeltaRed);
             Assert.AreEqual(16, profile.lastDeltaBlue);
             Assert.AreEqual(984, profile.redElo);
@@ -53,19 +56,37 @@ namespace KineticRank.Tests.EditMode
         }
 
         [Test]
-        public void RecordMatch_RatingFloor_NeverDropsBelowMinimumRating()
+        public void RecordDraw_EqualRatings_UpdatesStatsAndDrawCount()
+        {
+            var profile = new RankedProfile();
+            profile.RecordDraw(kFactor: 32);
+
+            Assert.AreEqual(1, profile.games);
+            Assert.AreEqual(0, profile.redWins);
+            Assert.AreEqual(0, profile.blueWins);
+            Assert.AreEqual(1, profile.draws);
+            Assert.AreEqual(0, profile.lastDeltaRed);
+            Assert.AreEqual(0, profile.lastDeltaBlue);
+            Assert.AreEqual(1000, profile.redElo);
+            Assert.AreEqual(1000, profile.blueElo);
+        }
+
+        [Test]
+        public void RecordMatch_RatingFloor_ClampsRatingAndAlignsDelta()
         {
             var profile = new RankedProfile { redElo = 10, blueElo = 10 };
             profile.RecordMatch(redWon: false, kFactor: 32);
 
             Assert.AreEqual(EloCalculator.MinRating, profile.redElo);
             Assert.GreaterOrEqual(profile.redElo, 1);
+            Assert.AreEqual(EloCalculator.MinRating - 10, profile.lastDeltaRed);
 
             var blueProfile = new RankedProfile { redElo = 10, blueElo = 10 };
             blueProfile.RecordMatch(redWon: true, kFactor: 32);
 
             Assert.AreEqual(EloCalculator.MinRating, blueProfile.blueElo);
             Assert.GreaterOrEqual(blueProfile.blueElo, 1);
+            Assert.AreEqual(EloCalculator.MinRating - 10, blueProfile.lastDeltaBlue);
         }
 
         [Test]
@@ -77,7 +98,8 @@ namespace KineticRank.Tests.EditMode
                 blueElo = 950,
                 games = 12,
                 redWins = 8,
-                blueWins = 4,
+                blueWins = 3,
+                draws = 1,
                 hudVisible = false
             };
 
@@ -88,6 +110,9 @@ namespace KineticRank.Tests.EditMode
             Assert.AreEqual(0, profile.games);
             Assert.AreEqual(0, profile.redWins);
             Assert.AreEqual(0, profile.blueWins);
+            Assert.AreEqual(0, profile.draws);
+            Assert.AreEqual(0, profile.lastDeltaRed);
+            Assert.AreEqual(0, profile.lastDeltaBlue);
             Assert.IsFalse(profile.hudVisible);
         }
 
@@ -99,6 +124,7 @@ namespace KineticRank.Tests.EditMode
                 redElo = 1300,
                 blueElo = 900,
                 games = 5,
+                draws = 1,
                 hudVisible = false
             };
 
@@ -106,6 +132,7 @@ namespace KineticRank.Tests.EditMode
 
             Assert.AreEqual(1000, profile.redElo);
             Assert.AreEqual(1000, profile.blueElo);
+            Assert.AreEqual(0, profile.draws);
             Assert.IsTrue(profile.hudVisible);
         }
 
@@ -116,18 +143,18 @@ namespace KineticRank.Tests.EditMode
             {
                 redElo = 1184,
                 blueElo = 916,
-                games = 25,
-                lastDeltaRed = 14,
-                lastDeltaBlue = -14,
-                redWins = 17,
-                blueWins = 8,
+                games = 14,
+                lastDeltaRed = 16,
+                lastDeltaBlue = -16,
+                redWins = 9,
+                blueWins = 4,
+                draws = 1,
                 hudVisible = false
             };
 
-            string json = JsonUtility.ToJson(original, prettyPrint: true);
+            var json = JsonUtility.ToJson(original);
             var restored = JsonUtility.FromJson<RankedProfile>(json);
 
-            Assert.IsNotNull(restored);
             Assert.AreEqual(original.redElo, restored.redElo);
             Assert.AreEqual(original.blueElo, restored.blueElo);
             Assert.AreEqual(original.games, restored.games);
@@ -135,21 +162,23 @@ namespace KineticRank.Tests.EditMode
             Assert.AreEqual(original.lastDeltaBlue, restored.lastDeltaBlue);
             Assert.AreEqual(original.redWins, restored.redWins);
             Assert.AreEqual(original.blueWins, restored.blueWins);
+            Assert.AreEqual(original.draws, restored.draws);
             Assert.AreEqual(original.hudVisible, restored.hudVisible);
         }
 
         [Test]
-        public void JsonSerialization_LegacyJsonWithoutHudVisible_PreservesParsedValues()
+        public void JsonSerialization_LegacyJsonWithoutDraws_LoadsWithZeroDraws()
         {
-            string legacyJson = "{\"redElo\":1120,\"blueElo\":880,\"games\":10,\"lastDeltaRed\":12,\"lastDeltaBlue\":-12,\"redWins\":7,\"blueWins\":3}";
-            var restored = JsonUtility.FromJson<RankedProfile>(legacyJson);
+            string legacyJson = "{\"redElo\":1100,\"blueElo\":900,\"games\":5,\"lastDeltaRed\":16,\"lastDeltaBlue\":-16,\"redWins\":3,\"blueWins\":2,\"hudVisible\":true}";
+            var profile = JsonUtility.FromJson<RankedProfile>(legacyJson);
 
-            Assert.IsNotNull(restored);
-            Assert.AreEqual(1120, restored.redElo);
-            Assert.AreEqual(880, restored.blueElo);
-            Assert.AreEqual(10, restored.games);
-            Assert.AreEqual(7, restored.redWins);
-            Assert.AreEqual(3, restored.blueWins);
+            Assert.AreEqual(1100, profile.redElo);
+            Assert.AreEqual(900, profile.blueElo);
+            Assert.AreEqual(5, profile.games);
+            Assert.AreEqual(3, profile.redWins);
+            Assert.AreEqual(2, profile.blueWins);
+            Assert.AreEqual(0, profile.draws);
+            Assert.IsTrue(profile.hudVisible);
         }
     }
 }

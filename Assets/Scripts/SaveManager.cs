@@ -26,6 +26,13 @@ public static class SaveManager
         Save();
     }
 
+    public static void RecordDraw()
+    {
+        EnsureLoaded();
+        data.RecordDraw(kFactor);
+        Save();
+    }
+
     public static void ResetRanked()
     {
         EnsureLoaded();
@@ -41,6 +48,7 @@ public static class SaveManager
     public static int  GetLastDeltaBlue() { EnsureLoaded(); return data.lastDeltaBlue; }
     public static int  GetRedWins()       { EnsureLoaded(); return data.redWins; }
     public static int  GetBlueWins()      { EnsureLoaded(); return data.blueWins; }
+    public static int  GetDraws()         { EnsureLoaded(); return data.draws; }
 
     // HUD visibility option
     public static bool GetHudVisible()    { EnsureLoaded(); return data.hudVisible; }

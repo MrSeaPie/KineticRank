@@ -24,11 +24,29 @@ namespace KineticRank.Logic
             int unconstrainedRed = (int)Math.Round(redElo + kFactor * (sRed - expRed));
             int unconstrainedBlue = (int)Math.Round(blueElo + kFactor * (sBlue - expBlue));
 
-            deltaRed = unconstrainedRed - redElo;
-            deltaBlue = unconstrainedBlue - blueElo;
+            newRed = Math.Max(MinRating, unconstrainedRed);
+            newBlue = Math.Max(MinRating, unconstrainedBlue);
+
+            deltaRed = newRed - redElo;
+            deltaBlue = newBlue - blueElo;
+        }
+
+        public static void CalculateDraw(int redElo, int blueElo, out int newRed, out int newBlue, out int deltaRed, out int deltaBlue, int kFactor = DefaultKFactor)
+        {
+            float expRed = ExpectedScore(redElo, blueElo);
+            float expBlue = ExpectedScore(blueElo, redElo);
+
+            float sRed = 0.5f;
+            float sBlue = 0.5f;
+
+            int unconstrainedRed = (int)Math.Round(redElo + kFactor * (sRed - expRed));
+            int unconstrainedBlue = (int)Math.Round(blueElo + kFactor * (sBlue - expBlue));
 
             newRed = Math.Max(MinRating, unconstrainedRed);
             newBlue = Math.Max(MinRating, unconstrainedBlue);
+
+            deltaRed = newRed - redElo;
+            deltaBlue = newBlue - blueElo;
         }
     }
 }
