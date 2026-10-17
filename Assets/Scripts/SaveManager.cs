@@ -1,8 +1,6 @@
-// File: Assets/Scripts/SaveManager.cs
 using System;
 using System.IO;
 using UnityEngine;
-using KineticRank.Logic;
 
 public static class SaveManager
 {
@@ -12,12 +10,10 @@ public static class SaveManager
     }
 
     static KineticRank.Logic.RankedProfile data;
-    static readonly int kFactor = 32;
+    const int kFactor = 32;
     static string SavePath => Path.Combine(Application.persistentDataPath, "kineticrank_ranked.json");
 
     static SaveManager() { Load(); }
-
-    // ───────────────── Public API ─────────────────
 
     public static void RecordMatch(bool redWon)
     {
@@ -40,18 +36,16 @@ public static class SaveManager
         Save();
     }
 
-    // Getters
-    public static int  GetRedElo()        { EnsureLoaded(); return data.redElo; }
-    public static int  GetBlueElo()       { EnsureLoaded(); return data.blueElo; }
-    public static int  GetGames()         { EnsureLoaded(); return data.games; }
-    public static int  GetLastDeltaRed()  { EnsureLoaded(); return data.lastDeltaRed; }
-    public static int  GetLastDeltaBlue() { EnsureLoaded(); return data.lastDeltaBlue; }
-    public static int  GetRedWins()       { EnsureLoaded(); return data.redWins; }
-    public static int  GetBlueWins()      { EnsureLoaded(); return data.blueWins; }
-    public static int  GetDraws()         { EnsureLoaded(); return data.draws; }
+    public static int GetRedElo() { EnsureLoaded(); return data.redElo; }
+    public static int GetBlueElo() { EnsureLoaded(); return data.blueElo; }
+    public static int GetGames() { EnsureLoaded(); return data.games; }
+    public static int GetLastDeltaRed() { EnsureLoaded(); return data.lastDeltaRed; }
+    public static int GetLastDeltaBlue() { EnsureLoaded(); return data.lastDeltaBlue; }
+    public static int GetRedWins() { EnsureLoaded(); return data.redWins; }
+    public static int GetBlueWins() { EnsureLoaded(); return data.blueWins; }
+    public static int GetDraws() { EnsureLoaded(); return data.draws; }
+    public static bool GetHudVisible() { EnsureLoaded(); return data.hudVisible; }
 
-    // HUD visibility option
-    public static bool GetHudVisible()    { EnsureLoaded(); return data.hudVisible; }
     public static void SetHudVisible(bool visible)
     {
         EnsureLoaded();
@@ -60,7 +54,6 @@ public static class SaveManager
         Save();
     }
 
-    // ───────────────── Internals ─────────────────
     static void EnsureLoaded()
     {
         if (data == null) Load();
@@ -100,10 +93,5 @@ public static class SaveManager
         {
             Debug.LogWarning($"[SaveManager] Save failed: {e.Message}");
         }
-    }
-
-    static float Expected(int ra, int rb)
-    {
-        return EloCalculator.ExpectedScore(ra, rb);
     }
 }
