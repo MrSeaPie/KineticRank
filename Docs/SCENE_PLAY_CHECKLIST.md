@@ -2,7 +2,7 @@
 
 Scope: tasks tsk_0mvays0ca325a0b14 (Input/HUD) and tsk_0mvayxrjkcb10b805 (Move resolution & Rank recording).
 Run in the Unity Editor (2022.3.62f1), starting from Assets/Scenes/MainMenu.unity unless noted.
-Record each result as PASS / FAIL / NOT RUN, with the commit hash.
+Record each result as PASS / FAIL / NOT RUN, with the commit hash. Do not mark this checklist done from reasoning or tests alone.
 Automated EditMode and PlayMode test suites cover core logic and regression; manual scene testing verifies interactive feel, timing, UI, and audio playback.
 
 Commit under test: ________  Tester: ________  Date: ________
@@ -18,8 +18,8 @@ Commit under test: ________  Tester: ________  Date: ________
 ## A. Scene fader and menu navigation (in merge mrg_0mvb7amea199ad9ea)
 - [ ] A1. From Match, press M once: one click sound, one fade, MainMenu loads.
 - [ ] A2. From Match, press M rapidly 5+ times: still exactly one fade and one load, no extra click sounds after the first.
-- [ ] A3. From MainMenu, start a match, then mash the start input: Match loads once.
-- [ ] A4. Play the Match scene directly (no MainMenu first; AudioController may be absent): pressing M produces no NullReferenceException in the Console.
+- [ ] A3. From MainMenu, press Space or click Play: one click sound, one fade, Match loads.
+- [ ] A4. From MainMenu, click Play rapidly 5+ times: still exactly one fade and one load.
 
 ## B. Rematch (Enter)
 - [ ] B1. After a win, press Enter once: Match reloads once and the board is empty.
@@ -28,7 +28,7 @@ Commit under test: ________  Tester: ________  Date: ________
 
 ## C. Ranked reset (Backspace / Reset button)
 - [ ] C1. Press Backspace once: toast asks for confirmation; Elo is unchanged.
-- [ ] C2. Press Backspace again within 2s: Elo resets; toast confirms; the result text (if a win banner is showing) is not overwritten.
+- [ ] C2. Press Backspace again within 2s: Elo resets to default, confirmed by toast.
 - [ ] C3. Press Backspace, wait more than 2s, press again: re-arms (confirmation toast again), no reset.
 - [ ] C4. Repeat C1-C3 with Time.timeScale = 0 (pause, if available): the window still expires on real time.
 - [ ] C5. In MainMenu, Backspace and the Reset button share one confirmation: one Backspace then one button click within 2s resets once.
@@ -36,9 +36,9 @@ Commit under test: ________  Tester: ________  Date: ________
 - [ ] C7. Restart the game after a reset: Elo stays reset (persistence via SaveManager).
 
 ## D. Power-up selection
-- [ ] D1. Select Queen, drop it: selection returns to Normal after the drop.
-- [ ] D2. Try to select the same side's Queen again: selection stays/falls back to Normal.
-- [ ] D3. Same as D1-D2 for Cleaner.
+- [ ] D1. Press 2: Queen selected; HUD highlights Queen; next drop places Queen.
+- [ ] D2. Press 3: Cleaner selected; HUD highlights Cleaner; next drop clears column.
+- [ ] D3. Press 2 when Queen already used: toast warning, selection remains on current piece.
 - [ ] D4. Red's spent Queen does not affect Blue's Queen availability.
 - [ ] D5. A normal drop after a spent power-up attempt places a Normal token and changes turn exactly once.
 
@@ -56,14 +56,16 @@ Commit under test: ________  Tester: ________  Date: ________
 - [ ] F3. After a win, no further tokens can be placed.
 
 ## G. Move resolution and outcome recording (integrated on main via task tsk_0mvayxrjkcb10b805)
-Record each item as PASS / FAIL in the editor, or note verified by automated suite:
-- [ ] G1. Normal drop into an empty column: token lands in the bottom row, turn changes exactly once, HUD updates.
-- [ ] G2. Drop into a full column: column downshift completes before turn changes; bottom token removed, others shift down by one, top occupied by new token.
-- [ ] G3. Queen placement: transforms adjacent opposing tokens within 1 Chebyshev step to player color; turn advances.
-- [ ] G4. Cleaner placement: clears all tokens in the target column; turn advances.
-- [ ] G5. Winning line: 4 connected tokens triggers win banner, victory sound, disables drop input, updates Elo in SaveManager.
-- [ ] G6. Simultaneous lines (Draw): board evaluates to Draw; draw banner displayed; ratings update appropriately.
-- [ ] G7. Elo persistence: winning a match updates winner (+Delta) and loser (-Delta) in SaveManager; verified persisted on reload.
-- [ ] G8. Match over state: once match is over, input lock prevents additional drops and piece selection.
-- [ ] G9. Mid-move rejection: clicks/keystrokes during move resolution coroutine are rejected.
-- [ ] G10. Rematch reset: pressing Enter after match completion reloads scene with clean board and reset power-up states.
+Scope: task tsk_0mvayxrjkcb10b805. Run in the Unity Editor (2022.3.62f1), starting from Assets/Scenes/Match.unity.
+Record each result as PASS / FAIL / NOT RUN, with the commit hash. Do not mark this checklist done from reasoning or automated tests alone.
+
+- [ ] G1. Normal drop into an empty column: token lands in the bottom row, turn changes exactly once, HUD updates. (Automated regression coverage: BoardResolutionTests.PlaceNormalToken, TokenSettlingTests.AnimatedFallArrivesAtTarget; manual acceptance pending interactive verification).
+- [ ] G2. Drop into a full column: column downshift completes before turn changes; bottom token removed, others shift down by one, top occupied by new token. (Automated regression coverage: BoardResolutionTests.FullColumnPopsBottomAndSettlesShiftedTokens; manual acceptance pending interactive verification).
+- [ ] G3. Queen placement: transforms adjacent opposing tokens within 1 Chebyshev step to player color; turn advances. (Automated regression coverage: BoardResolutionTests Queen placement and resolution tests; manual acceptance pending interactive verification).
+- [ ] G4. Cleaner placement: clears all tokens in the target column; turn advances. (Automated regression coverage: BoardResolutionTests.CleanerClearsColumnAndReopensAdmission; manual acceptance pending interactive verification).
+- [ ] G5. Winning line: 4 connected tokens triggers win banner, victory sound, disables drop input, updates Elo in SaveManager. (Automated regression coverage: MatchRecordingTests.RedLineRecordsExactlyOneWin, MatchRecordingTests.BlueLineRecordsExactlyOneWin; manual acceptance pending interactive verification).
+- [ ] G6. Simultaneous lines (Draw): board evaluates to Draw; draw banner displayed; ratings update appropriately. (Automated regression coverage: BoardEvaluatorTests; manual acceptance pending interactive verification).
+- [ ] G7. Elo persistence: winning a match updates winner (+Delta) and loser (-Delta) in SaveManager; verified persisted on reload. (Automated regression coverage: RankPersistenceTests; manual acceptance pending interactive verification).
+- [ ] G8. Match over state: once match is over, input lock prevents additional drops and piece selection. (Automated regression coverage: MoveAdmissionTests.TerminalMatchRejectsMovesAndCompletionCannotReopenInput; manual acceptance pending interactive verification).
+- [ ] G9. Mid-move rejection: clicks/keystrokes during move resolution coroutine are rejected. (Automated regression coverage: MoveAdmissionTests.MoveAdmissionRejectsOverlapAndReopensAfterCompletion, MoveAdmissionTests.LegacyPlacementCallbackCannotUnlockAnActiveMove; manual acceptance pending interactive verification).
+- [ ] G10. Rematch reset: pressing Enter after match completion reloads scene with clean board and reset power-up states. (Manual acceptance pending interactive verification).
