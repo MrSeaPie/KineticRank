@@ -1,83 +1,39 @@
-# KineticRank  
-*A kinetic twist on Connect 4*
+# KineticRank
 
-<p align="center">
-  <img src="Docs/screenshot.gif" width="450" alt="Animated screenshot – column shifts downward">
-</p>
+A competitive local two-player Connect Four variant with column shifts, Queen and Cleaner tokens, and persistent local Elo ratings.
 
----
+## Open the project
 
-## 📦  What’s implemented (v 0.2)
+Use Unity **2022.3.62f1**, the editor version recorded in `ProjectSettings/ProjectVersion.txt`.
 
-| Feature | Details |
-|---------|---------|
-| **Board autogeneration** | 7 × 6 grid of `BoardTile` prefabs at runtime. |
-| **Column-shift rule** | If you drop into a full column, the bottom piece pops out and the rest slide down. |
-| **Token drop animation** | Each `Token` prefab animates from spawn-above to final slot. |
-| **Turn logic** | Automatic RED → BLUE → RED alternation. |
-| **Win detection** | 4-in-a-row checked **after every move** (including after a column shift). |
-| **TMP win banner** | Giant “BLUE wins!” / “RED wins!” TextMeshPro banner centered on screen. |
-| **Basic reset** | Press **R** to reload scene (quick-restart while prototyping). |
+Open `Assets/Scenes/MainMenu.unity` for the menu or `Assets/Scenes/Match.unity` for the match scene, then enter Play mode.
 
-## 🛠  How to play / test
+## Gameplay
 
-1. **Unity 2023.2.6f1** or later.  
-2. Open project → `Scenes/Match.unity`.  
-3. Click the ▶ **Play** button.  
-4. **Left-click** inside a column to drop your token.
+Players alternate RED and BLUE turns on a 7 × 6 board. Dropping into a full column removes its bottom token and shifts the remaining tokens down. Queen tokens flip colours in a column; Cleaner tokens clear a column.
 
-## 🗺 Roadmap
+Moves resolve before another move can begin. Four-in-a-row is evaluated after resolution. If both colours have a winning line, the match is a draw. A terminal result locks further moves and records one ranked result for the match.
 
-* “Queen” power-up &mdash; flips the colours in a column.  
-* “Cleaner” power-up &mdash; removes every token in a column.  
-* Blitz mode (smaller board + turn timer).  
-* Local Elo ranking & stats panel.  
-* Sprites & SFX polish.
-
-## 📝  Controls (prototype)
+## Controls
 
 | Action | Input |
 |--------|-------|
-| Drop token | **Left mouse click** in board area |
-| Restart scene | **R** key |
+| Drop selected token | Left-click a column |
+| Select Normal token | N |
+| Select Queen token | Q |
+| Select Cleaner token | C |
+| Rematch | Enter |
+| Toggle rating HUD | H |
+| Reset local ranked statistics | Backspace |
 
----
+Ratings and statistics are stored locally through `SaveManager`. These local ratings do not constitute an online competitive ranking service.
 
-## 🧩 What’s implemented (v 0.3)
+## Verification status
 
-| Feature | Details |
-|----------|----------|
-| **Ranked / ELO system** | Every match updates persistent ratings for RED and BLUE using standard ELO (K = 32). |
-| **Always-on HUD** | Small TextMeshPro element (top corner) shows current ratings and win counts, e.g. `RED 971 (W2) | BLUE 1029 (W4)`. Toggle with **H**. |
-| **Persistent storage** | Ratings, wins, and games saved as JSON via `SaveManager`. Survive restarts. Reset anytime with **Backspace**. |
-| **Rematch flow** | Press **Enter** to instantly restart the match (no scene reload needed later). |
-| **WinBanner polish** | Shows “RED/BLUE wins!” and after 1.5 s adds a hint: *Press Enter for rematch*. |
-| **Updated input map** | **Enter = Rematch** **H = Toggle HUD** **Backspace = Reset Ranked** |
-| **Code added** | `SaveManager.cs`, `EloHud.cs`, `RankedControls.cs`, `PlayAgainControls.cs`, and updated `GameManager.cs` + `WinBanner.cs`. |
+Both automated suites were run sequentially against integrated revision `0e537232b5685c3a3c0e8f400126e44784e0e6fd` on 2026-10-17. The observed XML results report 36/36 EditMode tests and 10/10 PlayMode tests passed, with zero failures in either suite. The PlayMode run includes match-recording and disk-persistence regressions.
 
----
+Interactive scene acceptance remains **NOT RUN**. Automated test results do not establish that scene presentation, controls, audio, and complete player flows work correctly in interactive play. Follow `Docs/SCENE_PLAY_CHECKLIST.md` and record actual results before release.
 
-### 🧠 Developer Notes (v 0.3 memory anchor)
+## Remaining work
 
-This build (v 0.3 – Ranked & ELO Update) introduces a persistent rating system.
-A new chat can load this summary to instantly know the current project state:
-
-**Current repo:** [`KineticRank`](https://github.com/MrSeaPie/KineticRank)  
-**Branch:** `queen-cleaner-mechanic`  
-**Unity version:** *2022.3 LTS*  
-**Core gameplay:** Connect-4 variant with column-shift, Queens, and Cleaners.  
-**Latest milestone:** ELO + HUD + rematch system.  
-
-Next planned polish: “Play Again” without reload, power-up HUD, and sound/FX.
-
----
-
-*Last updated: v 0.3 (ELO / HUD / Rematch)*
-
-
-## 🎨  Credits / License
-
-All code © 2024 MrSeaPie — MIT License.  
-Art placeholders are simple coloured squares (CC0).  
-Text rendered with **TextMeshPro** (© Unity).
-
+Complete interactive scene acceptance, address any resulting defects, and review release readiness. Publishing, spending, and external account actions require owner approval.

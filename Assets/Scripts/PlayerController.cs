@@ -30,9 +30,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Ignore all input while a move is resolving or once the match has ended (win or draw)
-        var gm = GameManager.Instance;
-        if (gm != null && (gm.IsInputLocked || gm.IsMatchOver)) return;
+        if (GameManager.Instance != null && (GameManager.Instance.IsInputLocked || GameManager.Instance.IsMatchOver))
+            return;
 
         if (Input.GetKeyDown(KeyCode.N)) currentPiece = PieceType.Normal;
         if (Input.GetKeyDown(KeyCode.Q)) TrySelect(PieceType.Queen);

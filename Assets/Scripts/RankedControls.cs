@@ -39,14 +39,14 @@ public class RankedControls : MonoBehaviour
         // Reset ranked (Backspace twice within resetConfirmSeconds)
         if (Input.GetKeyDown(KeyCode.Backspace))
         {
-            // Block mid-match resets; allowed in menus (no GameManager) and after a win or draw
-            var gm = GameManager.Instance;
-            if (gm != null && !gm.IsMatchOver)
+            if (GameManager.Instance != null && !GameManager.Instance.IsMatchOver)
             {
                 resetConfirm.Cancel();
-                ShowToast("Finish the match before resetting ranked", Color.yellow, toastSeconds);
+                ShowToast("Finish the match before resetting ranked", Color.yellow, resetConfirmSeconds);
+                return;
             }
-            else if (resetConfirm.Press(Time.unscaledTime))
+
+            if (resetConfirm.Press(Time.unscaledTime))
             {
                 SaveManager.ResetRanked();
                 EloHud.RefreshAll();
