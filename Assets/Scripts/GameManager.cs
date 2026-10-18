@@ -70,9 +70,13 @@ public class GameManager : MonoBehaviour
         if (player != null) player.enabled = false;
         bool draw = result == EvaluationResult.Draw;
         bool redWins = result == EvaluationResult.RedWin;
-        if (draw) SaveManager.RecordDraw();
-        else SaveManager.RecordMatch(redWins);
-        EloHud.RefreshAll();
+        if (SoloSettings.Enabled) RecordSoloResult(draw, redWins);
+        else
+        {
+            if (draw) SaveManager.RecordDraw();
+            else SaveManager.RecordMatch(redWins);
+            EloHud.RefreshAll();
+        }
         if (!draw && AudioController.Instance != null) AudioController.Instance.PlayWin(redWins);
         else if (draw && AudioController.Instance != null) AudioController.Instance.PlayDraw();
         if (winBanner != null)
@@ -80,6 +84,15 @@ public class GameManager : MonoBehaviour
                 draw ? Color.white : redWins ? Color.red : Color.cyan);
         if (backToMenuButton != null) backToMenuButton.SetActive(true);
         StartCoroutine(ShowRematchHint());
+    }
+
+    // Solo matches go to the separate solo ladder; ranked Elo is never touched.
+    static void RecordSoloResult(bool draw, bool redWins)
+    {
+        if (draw) { SoloLadder.RecordDraw(SoloSettings.Tier); return; }
+        bool humanWon = redWins != SoloSettings.BotPlaysRed;
+        if (humanWon) SoloLadder.RecordWin(SoloSettings.Tier);
+        else SoloLadder.RecordLoss(SoloSettings.Tier);
     }
 
     IEnumerator ShowRematchHint()
