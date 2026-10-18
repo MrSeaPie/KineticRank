@@ -18,7 +18,7 @@ Commit under test: ________  Tester: ________  Date: ________
 ## A. Scene fader and menu navigation (in merge mrg_0mvb7amea199ad9ea)
 - [ ] A1. From Match, press M once: one click sound, one fade, MainMenu loads.
 - [ ] A2. From Match, press M rapidly 5+ times: still exactly one fade and one load, no extra click sounds after the first.
-- [ ] A3. From MainMenu, press Space or click Play: one click sound, one fade, Match loads.
+- [ ] A3. From MainMenu, press Enter/KeypadEnter or click Play: one click sound, one fade, Match loads.
 - [ ] A4. Play the Match scene directly (no MainMenu first; AudioController may be absent): pressing M produces no NullReferenceException in the Console.
 - [ ] A5. From MainMenu, click Play rapidly 5+ times: still exactly one fade and one load.
 
