@@ -11,6 +11,8 @@ using KineticRank.Logic;
 // Buttons are clones of PlayButton; no art is loaded here.
 public class SoloMenuBootstrap : MonoBehaviour
 {
+    const float ButtonGap = 16f;
+
     MainMenuController menu;
     GameObject mainButtons;
     GameObject tierPanel;
@@ -44,6 +46,18 @@ public class SoloMenuBootstrap : MonoBehaviour
         mainButtons = group.gameObject;
         if (menu.rankedSummary) summary = menu.rankedSummary.gameObject;
 
+        // Fallback: without a layout group the cloned buttons would sit on top of each other
+        if (!group.GetComponent<LayoutGroup>())
+        {
+            var layout = mainButtons.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = ButtonGap;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+        }
+
         // Tier panel: a copy of the button group (same layout and position) with its buttons removed
         tierPanel = Instantiate(mainButtons, group.parent);
         tierPanel.name = "SoloTierPanel";
@@ -72,6 +86,8 @@ public class SoloMenuBootstrap : MonoBehaviour
         var panel = tierPanel.AddComponent<SoloMenuPanel>();
         panel.menu = menu;
         panel.tierButtons = tierButtons;
+
+        KeepClearOfSummary(group as RectTransform);
     }
 
     static Button CloneButton(Button source, Transform parent, string name, string label)
@@ -83,6 +99,32 @@ public class SoloMenuBootstrap : MonoBehaviour
         var text = button.GetComponentInChildren<TMP_Text>(true);
         if (text) text.text = label;
         return button;
+    }
+
+    // The extra Solo button makes the group taller; push RankedSummary down if they would touch
+    void KeepClearOfSummary(RectTransform group)
+    {
+        if (!summary || !group) return;
+        var summaryRect = summary.transform as RectTransform;
+        if (!summaryRect || !summaryRect.parent) return;
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(group);
+        var corners = new Vector3[4];
+        float lowest = float.MaxValue;
+        foreach (Transform child in group)
+        {
+            var rect = child as RectTransform;
+            if (!rect || !child.gameObject.activeSelf) continue;
+            rect.GetWorldCorners(corners);
+            lowest = Mathf.Min(lowest, corners[0].y);
+        }
+        if (lowest == float.MaxValue) return;
+
+        float scale = summaryRect.parent.lossyScale.y;
+        if (scale <= 0f) return;
+        summaryRect.GetWorldCorners(corners);
+        float overlap = corners[1].y - (lowest - ButtonGap * scale);
+        if (overlap > 0f) summaryRect.anchoredPosition -= new Vector2(0f, overlap / scale);
     }
 
     void Update()
@@ -109,11 +151,10 @@ public class SoloMenuBootstrap : MonoBehaviour
         mainButtons.SetActive(true);
         if (summary) summary.SetActive(true);
         if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
-
-        // Re-enable next frame so the Escape or Enter that closed the panel doesn't also quit or start ranked
         StartCoroutine(EnableMenuNextFrame());
     }
 
+    // One frame later, so the key that closed the panel isn't also read by the menu
     IEnumerator EnableMenuNextFrame()
     {
         yield return null;
