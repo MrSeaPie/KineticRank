@@ -1,4 +1,6 @@
+using System;
 using UnityEngine;
+using KineticRank.Logic;
 
 public class PlayerController : MonoBehaviour
 {
@@ -28,9 +30,27 @@ public class PlayerController : MonoBehaviour
     public bool QueenAvailable(bool red)   => red ? !redQueenUsed   : !blueQueenUsed;
     public bool CleanerAvailable(bool red) => red ? !redCleanerUsed : !blueCleanerUsed;
 
+    // In Solo mode the bot's side ignores mouse/keys; SoloBotDriver submits through SubmitBotMove instead
+    bool IsBotTurn => SoloSettings.Enabled && isRedTurn == SoloSettings.BotPlaysRed;
+
+    Func<int, MoveKind, bool> botSink;
+
+    void OnEnable()
+    {
+        botSink = SubmitBotMove;
+        SoloBotDriver.MoveSink = botSink;
+    }
+
+    void OnDisable()
+    {
+        if (SoloBotDriver.MoveSink == botSink) SoloBotDriver.MoveSink = null;
+    }
+
     void Update()
     {
         if (GameManager.Instance != null && (GameManager.Instance.IsInputLocked || GameManager.Instance.IsMatchOver))
+            return;
+        if (IsBotTurn)
             return;
 
         if (Input.GetKeyDown(KeyCode.N))
@@ -48,63 +68,84 @@ public class PlayerController : MonoBehaviour
             var world = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             int col = BoardManager.WorldToColumn(world.x);
 
-            bool placed = false;
-
-            switch (currentPiece)
-            {
-                case PieceType.Normal:
-                    placed = board.PlaceNormalToken(col,
-                                isRedTurn ? redTokenPrefab : blueTokenPrefab,
-                                isRedTurn);
-                    break;
-
-                case PieceType.Queen:
-                    // one per player (selection already rejects a used queen; kept as a safety net)
-                    if (!QueenAvailable(isRedTurn))
-                    {
-                        currentPiece = PieceType.Normal;
-                        if (AudioController.Instance != null) AudioController.Instance.PlayInvalidMove();
-                        return;
-                    }
-
-                    placed = board.PlaceQueen(col,
-                                isRedTurn ? redQueenPrefab : blueQueenPrefab,    // visual disc that drops
-                                isRedTurn ? redTokenPrefab : blueTokenPrefab,    // the normal piece that stays
-                                isRedTurn);
-
-                    if (placed)
-                        if (isRedTurn) redQueenUsed = true; else blueQueenUsed = true;
-                    break;
-
-                case PieceType.Cleaner:
-                    if (!CleanerAvailable(isRedTurn))
-                    {
-                        currentPiece = PieceType.Normal;
-                        if (AudioController.Instance != null) AudioController.Instance.PlayInvalidMove();
-                        return;
-                    }
-
-                    placed = board.PlaceCleaner(col,
-                                isRedTurn ? redCleanerPrefab : blueCleanerPrefab);
-
-                    if (placed)
-                        if (isRedTurn) redCleanerUsed = true; else blueCleanerUsed = true;
-                    break;
-            }
-
-            if (placed)
-            {
-                // consume turn for ANY move
-                isRedTurn = !isRedTurn;
-                // always go back to Normal after a drop
-                currentPiece = PieceType.Normal;
-            }
-            else
-            {
-                // rejected move (full column, off-board click, etc.); drop/effect SFX live in BoardManager
-                if (AudioController.Instance != null) AudioController.Instance.PlayInvalidMove();
-            }
+            TryPlace(col, currentPiece);
         }
+    }
+
+    // Solo bot entry: same guards, placement, turn flip and SFX as a mouse click
+    bool SubmitBotMove(int col, MoveKind kind)
+    {
+        if (board == null || !IsBotTurn) return false;
+        if (GameManager.Instance != null && (GameManager.Instance.IsInputLocked || GameManager.Instance.IsMatchOver))
+            return false;
+
+        currentPiece = kind == MoveKind.Queen ? PieceType.Queen
+                     : kind == MoveKind.Cleaner ? PieceType.Cleaner
+                     : PieceType.Normal;
+        return TryPlace(col, currentPiece);
+    }
+
+    // Shared admission path for human and bot moves; returns true if the move was placed
+    bool TryPlace(int col, PieceType piece)
+    {
+        bool placed = false;
+
+        switch (piece)
+        {
+            case PieceType.Normal:
+                placed = board.PlaceNormalToken(col,
+                            isRedTurn ? redTokenPrefab : blueTokenPrefab,
+                            isRedTurn);
+                break;
+
+            case PieceType.Queen:
+                // one per player (selection already rejects a used queen; kept as a safety net)
+                if (!QueenAvailable(isRedTurn))
+                {
+                    currentPiece = PieceType.Normal;
+                    if (AudioController.Instance != null) AudioController.Instance.PlayInvalidMove();
+                    return false;
+                }
+
+                placed = board.PlaceQueen(col,
+                            isRedTurn ? redQueenPrefab : blueQueenPrefab,    // visual disc that drops
+                            isRedTurn ? redTokenPrefab : blueTokenPrefab,    // the normal piece that stays
+                            isRedTurn);
+
+                if (placed)
+                    if (isRedTurn) redQueenUsed = true; else blueQueenUsed = true;
+                break;
+
+            case PieceType.Cleaner:
+                if (!CleanerAvailable(isRedTurn))
+                {
+                    currentPiece = PieceType.Normal;
+                    if (AudioController.Instance != null) AudioController.Instance.PlayInvalidMove();
+                    return false;
+                }
+
+                placed = board.PlaceCleaner(col,
+                            isRedTurn ? redCleanerPrefab : blueCleanerPrefab);
+
+                if (placed)
+                    if (isRedTurn) redCleanerUsed = true; else blueCleanerUsed = true;
+                break;
+        }
+
+        if (placed)
+        {
+            // consume turn for ANY move
+            isRedTurn = !isRedTurn;
+            // always go back to Normal after a drop
+            currentPiece = PieceType.Normal;
+        }
+        else
+        {
+            // rejected move (full column or no valid target)
+            if (AudioController.Instance != null) AudioController.Instance.PlayInvalidMove();
+        }
+
+        return placed;
     }
 
     // Only select a power-up the current player still has; otherwise stay on Normal
