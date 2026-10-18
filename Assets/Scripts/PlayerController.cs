@@ -33,7 +33,11 @@ public class PlayerController : MonoBehaviour
         if (GameManager.Instance != null && (GameManager.Instance.IsInputLocked || GameManager.Instance.IsMatchOver))
             return;
 
-        if (Input.GetKeyDown(KeyCode.N)) currentPiece = PieceType.Normal;
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            currentPiece = PieceType.Normal;
+            AudioController.Instance.PlayTokenSelect();
+        }
         if (Input.GetKeyDown(KeyCode.Q)) TrySelect(PieceType.Queen);
         if (Input.GetKeyDown(KeyCode.C)) TrySelect(PieceType.Cleaner);
 
@@ -56,7 +60,12 @@ public class PlayerController : MonoBehaviour
 
                 case PieceType.Queen:
                     // one per player (selection already rejects a used queen; kept as a safety net)
-                    if (!QueenAvailable(isRedTurn)) { currentPiece = PieceType.Normal; return; }
+                    if (!QueenAvailable(isRedTurn))
+                    {
+                        currentPiece = PieceType.Normal;
+                        AudioController.Instance.PlayInvalidMove();
+                        return;
+                    }
 
                     placed = board.PlaceQueen(col,
                                 isRedTurn ? redQueenPrefab : blueQueenPrefab,    // visual disc that drops
@@ -68,7 +77,12 @@ public class PlayerController : MonoBehaviour
                     break;
 
                 case PieceType.Cleaner:
-                    if (!CleanerAvailable(isRedTurn)) { currentPiece = PieceType.Normal; return; }
+                    if (!CleanerAvailable(isRedTurn))
+                    {
+                        currentPiece = PieceType.Normal;
+                        AudioController.Instance.PlayInvalidMove();
+                        return;
+                    }
 
                     placed = board.PlaceCleaner(col,
                                 isRedTurn ? redCleanerPrefab : blueCleanerPrefab);
@@ -85,6 +99,11 @@ public class PlayerController : MonoBehaviour
                 // always go back to Normal after a drop
                 currentPiece = PieceType.Normal;
             }
+            else
+            {
+                // rejected move (full column, off-board click, etc.); drop/effect SFX live in BoardManager
+                AudioController.Instance.PlayInvalidMove();
+            }
         }
     }
 
@@ -96,8 +115,10 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log($"{(isRedTurn ? "Red" : "Blue")} {piece.ToString().ToLower()} already used.");
             currentPiece = PieceType.Normal;
+            AudioController.Instance.PlayInvalidMove();
             return;
         }
         currentPiece = piece;
+        AudioController.Instance.PlayTokenSelect();
     }
 }
