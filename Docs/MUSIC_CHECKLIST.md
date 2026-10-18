@@ -18,4 +18,4 @@ Commit under test: ________  Tester: ________  Date: ________
 - [ ] H7. Music volume is about 0.45 and sits under SFX: ui_click, win_red and win_blue stay clearly audible over the music. [NOT RUN]
 - [ ] H8. Play Match.unity directly (no MainMenu first): gameplay music starts and the Console shows no errors. [NOT RUN]
 - [ ] H9. Temporarily rename one gameplay clip: that track is skipped, a single warning is logged (not one per frame), and rotation continues. Restore the clip afterwards. [NOT RUN]
-- [ ] H10. Profiler or Memory view: only the current clip (plus the outgoing one during a crossfade) is loaded at a time. [NOT RUN]
+- [ ] H10. Observation only, no expected count: after several switches (menu -> match, let a gameplay track end, M back to menu, Play again), take a Profiler Memory module sample (Detailed view) and record which Audio/Music AudioClips are loaded and how many. Also note any frame hitch during a crossfade. MusicPlayer does not unload clips explicitly; this check gathers evidence for whether that is needed. [NOT RUN]
