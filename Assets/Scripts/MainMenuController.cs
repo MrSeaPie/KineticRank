@@ -79,13 +79,30 @@ public class MainMenuController : MonoBehaviour
     {
         if (SceneFader.IsFading) return;
 
+        // Hot-seat ranked match: a previous solo choice must not carry over
+        SoloSettings.Clear();
+        LoadMatch();
+    }
+
+    // Solo match vs the bot at the chosen tier (called by SoloMenuPanel)
+    public void PlaySolo(BotTier tier)
+    {
+        if (SceneFader.IsFading) return;
+
+        SoloSettings.StartSolo(tier);
+        if (!LoadMatch()) SoloSettings.Clear();
+    }
+
+    bool LoadMatch()
+    {
         PlayClick();
         if (string.IsNullOrEmpty(matchSceneName))
         {
             Debug.LogWarning("[MainMenu] matchSceneName is empty.");
-            return;
+            return false;
         }
         SceneFader.LoadScene(matchSceneName, 0.3f);
+        return true;
     }
 
     // First press arms the confirm window; a second press within resetConfirmSeconds resets
