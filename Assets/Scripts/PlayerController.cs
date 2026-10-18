@@ -36,7 +36,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.N))
         {
             currentPiece = PieceType.Normal;
-            AudioController.Instance.PlayTokenSelect();
+            if (AudioController.Instance != null) AudioController.Instance.PlayTokenSelect();
         }
         if (Input.GetKeyDown(KeyCode.Q)) TrySelect(PieceType.Queen);
         if (Input.GetKeyDown(KeyCode.C)) TrySelect(PieceType.Cleaner);
@@ -63,7 +63,7 @@ public class PlayerController : MonoBehaviour
                     if (!QueenAvailable(isRedTurn))
                     {
                         currentPiece = PieceType.Normal;
-                        AudioController.Instance.PlayInvalidMove();
+                        if (AudioController.Instance != null) AudioController.Instance.PlayInvalidMove();
                         return;
                     }
 
@@ -80,7 +80,7 @@ public class PlayerController : MonoBehaviour
                     if (!CleanerAvailable(isRedTurn))
                     {
                         currentPiece = PieceType.Normal;
-                        AudioController.Instance.PlayInvalidMove();
+                        if (AudioController.Instance != null) AudioController.Instance.PlayInvalidMove();
                         return;
                     }
 
@@ -102,7 +102,7 @@ public class PlayerController : MonoBehaviour
             else
             {
                 // rejected move (full column, off-board click, etc.); drop/effect SFX live in BoardManager
-                AudioController.Instance.PlayInvalidMove();
+                if (AudioController.Instance != null) AudioController.Instance.PlayInvalidMove();
             }
         }
     }
@@ -115,10 +115,10 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log($"{(isRedTurn ? "Red" : "Blue")} {piece.ToString().ToLower()} already used.");
             currentPiece = PieceType.Normal;
-            AudioController.Instance.PlayInvalidMove();
+            if (AudioController.Instance != null) AudioController.Instance.PlayInvalidMove();
             return;
         }
         currentPiece = piece;
-        AudioController.Instance.PlayTokenSelect();
+        if (AudioController.Instance != null) AudioController.Instance.PlayTokenSelect();
     }
 }
