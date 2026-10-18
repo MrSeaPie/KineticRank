@@ -8,6 +8,13 @@ using UnityEngine;
 ///     ui_click.wav / .mp3
 ///     win_red.wav
 ///     win_blue.wav
+///     token_drop.wav
+///     queen_flip.wav
+///     cleaner_clear.wav
+///     column_shift.wav
+///     invalid_move.wav
+///     token_select.wav
+///     match_draw.wav
 /// - If clips are missing, methods safely no-op.
 /// </summary>
 public class AudioController : MonoBehaviour
@@ -33,6 +40,13 @@ public class AudioController : MonoBehaviour
     AudioClip _click;
     AudioClip _winRed;
     AudioClip _winBlue;
+    AudioClip _tokenDrop;
+    AudioClip _queenFlip;
+    AudioClip _cleanerClear;
+    AudioClip _columnShift;
+    AudioClip _invalidMove;
+    AudioClip _tokenSelect;
+    AudioClip _matchDraw;
 
     [Range(0f, 1f)] public float uiVolume = 0.7f;
     [Range(0f, 1f)] public float fxVolume = 0.9f;
@@ -50,9 +64,16 @@ public class AudioController : MonoBehaviour
         _sourceFX = gameObject.AddComponent<AudioSource>();
 
         // Try to load optional clips from Resources/Audio/
-        _click   = Resources.Load<AudioClip>("Audio/ui_click");
-        _winRed  = Resources.Load<AudioClip>("Audio/win_red");
-        _winBlue = Resources.Load<AudioClip>("Audio/win_blue");
+        _click        = Resources.Load<AudioClip>("Audio/ui_click");
+        _winRed       = Resources.Load<AudioClip>("Audio/win_red");
+        _winBlue      = Resources.Load<AudioClip>("Audio/win_blue");
+        _tokenDrop    = Resources.Load<AudioClip>("Audio/token_drop");
+        _queenFlip    = Resources.Load<AudioClip>("Audio/queen_flip");
+        _cleanerClear = Resources.Load<AudioClip>("Audio/cleaner_clear");
+        _columnShift  = Resources.Load<AudioClip>("Audio/column_shift");
+        _invalidMove  = Resources.Load<AudioClip>("Audio/invalid_move");
+        _tokenSelect  = Resources.Load<AudioClip>("Audio/token_select");
+        _matchDraw    = Resources.Load<AudioClip>("Audio/match_draw");
     }
 
     public void PlayClick()
@@ -66,5 +87,47 @@ public class AudioController : MonoBehaviour
         var clip = red ? _winRed : _winBlue;
         if (clip == null) return;
         _sourceFX.PlayOneShot(clip, fxVolume);
+    }
+
+    public void PlayDraw()
+    {
+        if (_matchDraw == null) return;
+        _sourceFX.PlayOneShot(_matchDraw, fxVolume);
+    }
+
+    public void PlayTokenDrop()
+    {
+        if (_tokenDrop == null) return;
+        _sourceFX.PlayOneShot(_tokenDrop, fxVolume);
+    }
+
+    public void PlayQueenFlip()
+    {
+        if (_queenFlip == null) return;
+        _sourceFX.PlayOneShot(_queenFlip, fxVolume);
+    }
+
+    public void PlayCleanerClear()
+    {
+        if (_cleanerClear == null) return;
+        _sourceFX.PlayOneShot(_cleanerClear, fxVolume);
+    }
+
+    public void PlayColumnShift()
+    {
+        if (_columnShift == null) return;
+        _sourceFX.PlayOneShot(_columnShift, fxVolume);
+    }
+
+    public void PlayInvalidMove()
+    {
+        if (_invalidMove == null) return;
+        _sourceUI.PlayOneShot(_invalidMove, uiVolume);
+    }
+
+    public void PlayTokenSelect()
+    {
+        if (_tokenSelect == null) return;
+        _sourceUI.PlayOneShot(_tokenSelect, uiVolume);
     }
 }

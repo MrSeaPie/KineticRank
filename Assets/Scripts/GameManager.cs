@@ -74,6 +74,7 @@ public class GameManager : MonoBehaviour
         else SaveManager.RecordMatch(redWins);
         EloHud.RefreshAll();
         if (!draw && AudioController.Instance != null) AudioController.Instance.PlayWin(redWins);
+        else if (draw && AudioController.Instance != null) AudioController.Instance.PlayDraw();
         if (winBanner != null)
             winBanner.Show(draw ? "DRAW — both players have four!" : redWins ? "RED wins!" : "BLUE wins!",
                 draw ? Color.white : redWins ? Color.red : Color.cyan);
