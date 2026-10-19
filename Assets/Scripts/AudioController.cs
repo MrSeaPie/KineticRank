@@ -15,6 +15,7 @@ using UnityEngine;
 ///     invalid_move.wav
 ///     token_select.wav
 ///     match_draw.wav
+///     column_hover.wav
 /// - If clips are missing, methods safely no-op.
 /// </summary>
 public class AudioController : MonoBehaviour
@@ -47,6 +48,7 @@ public class AudioController : MonoBehaviour
     AudioClip _invalidMove;
     AudioClip _tokenSelect;
     AudioClip _matchDraw;
+    AudioClip _columnHover;
 
     [Range(0f, 1f)] public float uiVolume = 0.7f;
     [Range(0f, 1f)] public float fxVolume = 0.9f;
@@ -74,6 +76,7 @@ public class AudioController : MonoBehaviour
         _invalidMove  = Resources.Load<AudioClip>("Audio/invalid_move");
         _tokenSelect  = Resources.Load<AudioClip>("Audio/token_select");
         _matchDraw    = Resources.Load<AudioClip>("Audio/match_draw");
+        _columnHover  = Resources.Load<AudioClip>("Audio/column_hover");
     }
 
     public void PlayClick()
@@ -129,5 +132,11 @@ public class AudioController : MonoBehaviour
     {
         if (_tokenSelect == null) return;
         _sourceUI.PlayOneShot(_tokenSelect, uiVolume);
+    }
+
+    public void PlayColumnHover()
+    {
+        if (_columnHover == null) return;
+        _sourceUI.PlayOneShot(_columnHover, uiVolume);
     }
 }
