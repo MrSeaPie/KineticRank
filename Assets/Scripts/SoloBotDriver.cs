@@ -27,6 +27,8 @@ public class SoloBotDriver : MonoBehaviour
             readyAt = -1f;
             return;
         }
+        // Overlays such as the how-to-play panel pause the match by disabling the player's input
+        if (!player.enabled) { readyAt = -1f; return; }
 
         // Wait one think delay after the board is unlocked, then search once.
         if (readyAt < 0f) { readyAt = Time.time + thinkDelay; return; }
