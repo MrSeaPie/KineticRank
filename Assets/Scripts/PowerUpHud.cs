@@ -1,13 +1,15 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 // Display-only match information; keyboard and board input stay with PlayerController.
 public class PowerUpHud : MonoBehaviour
 {
+    [SerializeField] Sprite panelSprite;
     PlayerController player;
-    GUIStyle headingStyle;
-    GUIStyle detailStyle;
-    GUIStyle hintStyle;
+    GameObject canvasObject;
+    RectTransform panel;
+    Text heading, redUses, blueUses, hint;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Register()
@@ -21,59 +23,94 @@ public class PowerUpHud : MonoBehaviour
         var pc = FindObjectOfType<PlayerController>();
         if (pc == null || FindObjectOfType<PowerUpHud>() != null) return;
         var go = new GameObject("PowerUpHud");
+        SceneManager.MoveGameObjectToScene(go, pc.gameObject.scene);
         go.AddComponent<PowerUpHud>().player = pc;
     }
 
-    void OnGUI()
+    void Start()
     {
-        if (player == null || !player.enabled) return;
-        if (headingStyle == null)
-        {
-            headingStyle = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold };
-            detailStyle = new GUIStyle(GUI.skin.label);
-            hintStyle = new GUIStyle(GUI.skin.label);
-            headingStyle.normal.textColor = new Color(0.953f, 0.910f, 0.824f);
-            detailStyle.normal.textColor = headingStyle.normal.textColor;
-            hintStyle.normal.textColor = new Color(0.886f, 0.678f, 0.447f);
-        }
+        if (player == null) player = FindObjectOfType<PlayerController>();
+        canvasObject = new GameObject("PowerUpHudCanvas", typeof(RectTransform), typeof(Canvas));
+        canvasObject.transform.SetParent(transform, false);
+        var canvas = canvasObject.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 10;
 
-        // Screen.safeArea uses bottom-left coordinates; IMGUI uses top-left.
+        var panelObject = new GameObject("PowerUpPanel", typeof(RectTransform), typeof(Image));
+        panelObject.transform.SetParent(canvasObject.transform, false);
+        panel = panelObject.GetComponent<RectTransform>();
+        panel.anchorMin = panel.anchorMax = Vector2.zero;
+        panel.pivot = Vector2.zero;
+        var image = panelObject.GetComponent<Image>();
+        image.sprite = panelSprite;
+        image.type = Image.Type.Sliced;
+        image.pixelsPerUnitMultiplier = 4f;
+        image.color = panelSprite != null ? Color.white : new Color(0.149f, 0.082f, 0.043f, 0.96f);
+        image.raycastTarget = false;
+
+        Color ivory = new Color(0.953f, 0.910f, 0.824f);
+        heading = MakeText("Turn", ivory, FontStyle.Bold);
+        redUses = MakeText("RedUses", ivory, FontStyle.Normal);
+        blueUses = MakeText("BlueUses", ivory, FontStyle.Normal);
+        hint = MakeText("SelectionHint", new Color(0.886f, 0.678f, 0.447f), FontStyle.Normal);
+        hint.text = "Select: N Normal / Q Queen / C Cleaner";
+        Refresh();
+    }
+
+    Text MakeText(string name, Color color, FontStyle style)
+    {
+        var go = new GameObject(name, typeof(RectTransform), typeof(Text));
+        go.transform.SetParent(panel, false);
+        var text = go.GetComponent<Text>();
+        text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        text.fontStyle = style;
+        text.color = color;
+        text.alignment = TextAnchor.UpperLeft;
+        text.horizontalOverflow = HorizontalWrapMode.Overflow;
+        text.verticalOverflow = VerticalWrapMode.Truncate;
+        text.supportRichText = false;
+        text.raycastTarget = false;
+        return text;
+    }
+
+    void Update() => Refresh();
+
+    void Refresh()
+    {
+        if (panel == null) return;
         Rect safe = Screen.safeArea;
         float width = Mathf.Min(620f, Mathf.Max(0f, safe.width - 20f));
-        if (width < 1f) return;
-        float scale = Mathf.Clamp(width / 620f, 0.5f, 1f);
-        float height = 88f * scale;
-        float left = safe.x + (safe.width - width) * 0.5f;
-        float top = Screen.height - safe.y - 10f - height;
-        Rect panel = new Rect(left, top, width, height);
-        Color previousColor = GUI.color;
-        Color previousBackground = GUI.backgroundColor;
-        GUI.color = Color.white;
-        GUI.backgroundColor = new Color(0.149f, 0.082f, 0.043f, 0.96f);
-        GUI.Box(panel, GUIContent.none);
-        GUI.backgroundColor = previousBackground;
+        bool visible = player != null && player.enabled && width >= 1f;
+        panel.gameObject.SetActive(visible);
+        if (!visible) return;
 
-        headingStyle.fontSize = Mathf.RoundToInt(18f * scale);
-        detailStyle.fontSize = Mathf.RoundToInt(14f * scale);
-        hintStyle.fontSize = Mathf.RoundToInt(14f * scale);
-        float x = left + 14f * scale;
-        float y = top + 6f * scale;
+        float scale = Mathf.Clamp(width / 620f, 0.5f, 1f);
+        panel.anchoredPosition = new Vector2(safe.x + (safe.width - width) * 0.5f, safe.y + 10f);
+        panel.sizeDelta = new Vector2(width, 88f * scale);
         float innerWidth = width - 28f * scale;
+        float gap = 12f * scale;
+        float columnWidth = (innerWidth - gap) * 0.5f;
+        Place(heading, 14f * scale, 6f * scale, innerWidth, 25f * scale, 18f * scale);
+        Place(redUses, 14f * scale, 32f * scale, columnWidth, 22f * scale, 14f * scale);
+        Place(blueUses, 14f * scale + columnWidth + gap, 32f * scale, columnWidth, 22f * scale, 14f * scale);
+        Place(hint, 14f * scale, 55f * scale, innerWidth, 23f * scale, 14f * scale);
         var manager = GameManager.Instance;
         string status = manager != null && manager.IsResolvingMove
             ? "Resolving move..."
             : $"{(player.IsRedTurn ? "RED" : "BLUE")} to move";
-        GUI.Label(new Rect(x, y, innerWidth, 25f * scale),
-            $"{status}   |   {player.CurrentPieceName}", headingStyle);
-        y += 26f * scale;
-        float gap = 12f * scale;
-        float columnWidth = (innerWidth - gap) * 0.5f;
-        GUI.Label(new Rect(x, y, columnWidth, 22f * scale), Uses(true), detailStyle);
-        GUI.Label(new Rect(x + columnWidth + gap, y, columnWidth, 22f * scale), Uses(false), detailStyle);
-        y += 23f * scale;
-        GUI.Label(new Rect(x, y, innerWidth, 23f * scale),
-            "Select: N Normal / Q Queen / C Cleaner", hintStyle);
-        GUI.color = previousColor;
+        heading.text = $"{status}   |   {player.CurrentPieceName}";
+        redUses.text = Uses(true);
+        blueUses.text = Uses(false);
+    }
+
+    static void Place(Text text, float x, float y, float width, float height, float fontSize)
+    {
+        var rect = text.rectTransform;
+        rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 1f);
+        rect.anchoredPosition = new Vector2(x, -y);
+        rect.sizeDelta = new Vector2(width, height);
+        text.fontSize = Mathf.RoundToInt(fontSize);
     }
 
     string Uses(bool red)
