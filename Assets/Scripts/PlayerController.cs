@@ -45,6 +45,9 @@ public class PlayerController : MonoBehaviour
     // In Solo mode the bot's side ignores mouse/keys; SoloBotDriver submits through SubmitBotMove instead
     bool IsBotTurn => SoloSettings.Enabled && isRedTurn == SoloSettings.BotPlaysRed;
 
+    // Puzzle mode: the defender side ignores mouse/keys; the puzzle runtime submits through SubmitPuzzleReply instead
+    bool IsPuzzleDefenderTurn => PuzzleSettings.Enabled && isRedTurn != PuzzleSettings.AttackerIsRed;
+
     Func<int, MoveKind, bool> botSink;
 
     void OnEnable()
@@ -62,7 +65,7 @@ public class PlayerController : MonoBehaviour
     {
         if (GameManager.Instance != null && (GameManager.Instance.IsInputLocked || GameManager.Instance.IsMatchOver))
             return;
-        if (IsBotTurn)
+        if (IsBotTurn || IsPuzzleDefenderTurn)
             return;
 
         if (Input.GetKeyDown(KeyCode.N))
@@ -88,6 +91,19 @@ public class PlayerController : MonoBehaviour
     bool SubmitBotMove(int col, MoveKind kind)
     {
         if (board == null || !IsBotTurn) return false;
+        if (GameManager.Instance != null && (GameManager.Instance.IsInputLocked || GameManager.Instance.IsMatchOver))
+            return false;
+
+        currentPiece = kind == MoveKind.Queen ? PieceType.Queen
+                     : kind == MoveKind.Cleaner ? PieceType.Cleaner
+                     : PieceType.Normal;
+        return TryPlace(col, currentPiece);
+    }
+
+    // Puzzle defender entry: only on the defender's turn in puzzle mode; same placement path as a mouse click
+    public bool SubmitPuzzleReply(int col, MoveKind kind)
+    {
+        if (board == null || !IsPuzzleDefenderTurn) return false;
         if (GameManager.Instance != null && (GameManager.Instance.IsInputLocked || GameManager.Instance.IsMatchOver))
             return false;
 
