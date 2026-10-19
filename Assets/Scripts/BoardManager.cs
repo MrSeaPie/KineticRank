@@ -162,6 +162,37 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    // Rebuilds the visual tokens from a logic state with no fall animation (puzzles, tutorial).
+    // Side to move and power-up flags belong to PlayerController and are not touched here.
+    public bool LoadPosition(KineticRank.Logic.GameState state)
+    {
+        if ((object)state == null || resolvingMove) return false;
+        if (!redTokenPrefab || !blueTokenPrefab) return false;
+        if (tokenGrid == null || tokenGrid.GetLength(0) != columns || tokenGrid.GetLength(1) != rows)
+            tokenGrid = new GameObject[columns, rows];
+
+        for (int x = 0; x < columns; x++)
+            for (int y = 0; y < rows; y++)
+            {
+                if (tokenGrid[x, y]) Destroy(tokenGrid[x, y]);
+                tokenGrid[x, y] = null;
+            }
+
+        for (int x = 0; x < columns; x++)
+            for (int y = 0; y < rows; y++)
+            {
+                int cell = state.Cell(x, y);
+                if (cell == 0) continue;
+                var prefab = cell == 1 ? redTokenPrefab : blueTokenPrefab;
+                var token = Instantiate(prefab, GridToWorld(x, y), Quaternion.identity);
+                if (boardParent) token.transform.SetParent(boardParent, true);
+                tokenGrid[x, y] = token;
+                var animation = token.GetComponent<Token>();
+                if (animation) animation.SettleAt(GridToWorld(x, y));
+            }
+        return true;
+    }
+
     public bool InBounds(int x, int y) => 0 <= x && x < columns && 0 <= y && y < rows;
 
     public bool IsToken(int x, int y, bool isRed)
