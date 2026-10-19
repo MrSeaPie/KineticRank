@@ -8,11 +8,14 @@ namespace KineticRank.Logic
     {
         public static bool Enabled { get; private set; }
         public static string CurrentId { get; private set; } = "";
+        // Side the player solves for (the side to move in the puzzle's start position)
+        public static bool AttackerIsRed { get; private set; } = true;
 
-        public static void StartPuzzle(string id)
+        public static void StartPuzzle(string id, bool attackerIsRed = true)
         {
             if (string.IsNullOrEmpty(id)) throw new ArgumentException("Puzzle id must be non-empty", nameof(id));
             CurrentId = id;
+            AttackerIsRed = attackerIsRed;
             Enabled = true;
         }
 
@@ -20,6 +23,7 @@ namespace KineticRank.Logic
         {
             Enabled = false;
             CurrentId = "";
+            AttackerIsRed = true;
         }
     }
 }
