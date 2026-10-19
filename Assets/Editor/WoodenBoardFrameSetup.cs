@@ -62,7 +62,10 @@ public static class WoodenBoardFrameSetup
         }
         finally
         {
-            EditorSceneManager.RestoreSceneManagerSetup(previous);
+            // Batch startup can have no loaded active scene, which Unity cannot restore.
+            // In that case leave the saved Match scene open; preserve valid editor setups.
+            if (Array.Exists(previous, setup => setup.isLoaded && setup.isActive))
+                EditorSceneManager.RestoreSceneManagerSetup(previous);
         }
     }
 }
