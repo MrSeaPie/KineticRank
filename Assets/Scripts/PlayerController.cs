@@ -30,6 +30,18 @@ public class PlayerController : MonoBehaviour
     public bool QueenAvailable(bool red)   => red ? !redQueenUsed   : !blueQueenUsed;
     public bool CleanerAvailable(bool red) => red ? !redCleanerUsed : !blueCleanerUsed;
 
+    // Puzzle/tutorial entry: take side to move and power-up availability from a loaded position (pair with BoardManager.LoadPosition)
+    public void LoadTurnState(GameState s)
+    {
+        if (s == null) return;
+        isRedTurn = s.RedToMove;
+        redQueenUsed = !s.QueenAvailable(true);
+        redCleanerUsed = !s.CleanerAvailable(true);
+        blueQueenUsed = !s.QueenAvailable(false);
+        blueCleanerUsed = !s.CleanerAvailable(false);
+        currentPiece = PieceType.Normal;
+    }
+
     // In Solo mode the bot's side ignores mouse/keys; SoloBotDriver submits through SubmitBotMove instead
     bool IsBotTurn => SoloSettings.Enabled && isRedTurn == SoloSettings.BotPlaysRed;
 
@@ -130,7 +142,7 @@ public class PlayerController : MonoBehaviour
                 if (placed)
                     if (isRedTurn) redCleanerUsed = true; else blueCleanerUsed = true;
                 break;
-        }
+        }   // end switch
 
         if (placed)
         {
