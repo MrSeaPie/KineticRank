@@ -30,6 +30,9 @@ public class PlayerController : MonoBehaviour
     public bool QueenAvailable(bool red)   => red ? !redQueenUsed   : !blueQueenUsed;
     public bool CleanerAvailable(bool red) => red ? !redCleanerUsed : !blueCleanerUsed;
 
+    // Raised after every successful placement (mouse, bot or puzzle reply): column, move kind, mover was Red
+    public static event Action<int, MoveKind, bool> MovePlaced;
+
     // Puzzle/tutorial entry: take side to move and power-up availability from a loaded position (pair with BoardManager.LoadPosition)
     public void LoadTurnState(GameState s)
     {
@@ -166,6 +169,11 @@ public class PlayerController : MonoBehaviour
             isRedTurn = !isRedTurn;
             // always go back to Normal after a drop
             currentPiece = PieceType.Normal;
+            // notify listeners (puzzle runtime) with the move just made; the mover is the side that no longer has the turn
+            var kind = piece == PieceType.Queen ? MoveKind.Queen
+                     : piece == PieceType.Cleaner ? MoveKind.Cleaner
+                     : MoveKind.Normal;
+            MovePlaced?.Invoke(col, kind, !isRedTurn);
         }
         else
         {
