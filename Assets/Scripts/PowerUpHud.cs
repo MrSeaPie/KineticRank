@@ -32,9 +32,9 @@ public class PowerUpHud : MonoBehaviour
             headingStyle = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold };
             detailStyle = new GUIStyle(GUI.skin.label);
             hintStyle = new GUIStyle(GUI.skin.label);
-            headingStyle.normal.textColor = Color.white;
-            detailStyle.normal.textColor = Color.white;
-            hintStyle.normal.textColor = new Color(0.8f, 0.85f, 0.92f);
+            headingStyle.normal.textColor = new Color(0.953f, 0.910f, 0.824f);
+            detailStyle.normal.textColor = headingStyle.normal.textColor;
+            hintStyle.normal.textColor = new Color(0.886f, 0.678f, 0.447f);
         }
 
         // Screen.safeArea uses bottom-left coordinates; IMGUI uses top-left.
@@ -42,34 +42,35 @@ public class PowerUpHud : MonoBehaviour
         float width = Mathf.Min(620f, Mathf.Max(0f, safe.width - 20f));
         if (width < 1f) return;
         float scale = Mathf.Clamp(width / 620f, 0.5f, 1f);
-        float height = 124f * scale;
+        float height = 88f * scale;
         float left = safe.x + (safe.width - width) * 0.5f;
         float top = Screen.height - safe.y - 10f - height;
         Rect panel = new Rect(left, top, width, height);
         Color previousColor = GUI.color;
         Color previousBackground = GUI.backgroundColor;
         GUI.color = Color.white;
-        GUI.backgroundColor = new Color(0.08f, 0.12f, 0.2f, 0.96f);
+        GUI.backgroundColor = new Color(0.149f, 0.082f, 0.043f, 0.96f);
         GUI.Box(panel, GUIContent.none);
         GUI.backgroundColor = previousBackground;
 
-        headingStyle.fontSize = Mathf.RoundToInt(20f * scale);
-        detailStyle.fontSize = Mathf.RoundToInt(17f * scale);
-        hintStyle.fontSize = Mathf.RoundToInt(15f * scale);
+        headingStyle.fontSize = Mathf.RoundToInt(18f * scale);
+        detailStyle.fontSize = Mathf.RoundToInt(14f * scale);
+        hintStyle.fontSize = Mathf.RoundToInt(14f * scale);
         float x = left + 14f * scale;
-        float y = top + 8f * scale;
+        float y = top + 6f * scale;
         float innerWidth = width - 28f * scale;
         var manager = GameManager.Instance;
         string status = manager != null && manager.IsResolvingMove
             ? "Resolving move..."
             : $"{(player.IsRedTurn ? "RED" : "BLUE")} to move";
-        GUI.Label(new Rect(x, y, innerWidth, 28f * scale),
+        GUI.Label(new Rect(x, y, innerWidth, 25f * scale),
             $"{status}   |   {player.CurrentPieceName}", headingStyle);
-        y += 30f * scale;
-        GUI.Label(new Rect(x, y, innerWidth, 24f * scale), Uses(true), detailStyle);
-        y += 24f * scale;
-        GUI.Label(new Rect(x, y, innerWidth, 24f * scale), Uses(false), detailStyle);
-        y += 25f * scale;
+        y += 26f * scale;
+        float gap = 12f * scale;
+        float columnWidth = (innerWidth - gap) * 0.5f;
+        GUI.Label(new Rect(x, y, columnWidth, 22f * scale), Uses(true), detailStyle);
+        GUI.Label(new Rect(x + columnWidth + gap, y, columnWidth, 22f * scale), Uses(false), detailStyle);
+        y += 23f * scale;
         GUI.Label(new Rect(x, y, innerWidth, 23f * scale),
             "Select: N Normal / Q Queen / C Cleaner", hintStyle);
         GUI.color = previousColor;
@@ -79,6 +80,6 @@ public class PowerUpHud : MonoBehaviour
     {
         string queen = player.QueenAvailable(red) ? "ready" : "used";
         string cleaner = player.CleanerAvailable(red) ? "ready" : "used";
-        return $"{(red ? "RED" : "BLUE")}   Queen: {queen}   |   Cleaner: {cleaner}";
+        return $"{(red ? "RED" : "BLUE")}   Queen: {queen} | Cleaner: {cleaner}";
     }
 }
