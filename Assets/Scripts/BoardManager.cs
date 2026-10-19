@@ -76,6 +76,7 @@ public class BoardManager : MonoBehaviour
                 if (token) AnimateOrSnap(token, GridToWorld(column, r - 1));
             }
             tokenGrid[column, rows - 1] = null;
+            if (AudioController.Instance != null) AudioController.Instance.PlayColumnShift();
         }
 
         landingY = 0;
@@ -112,6 +113,7 @@ public class BoardManager : MonoBehaviour
     private IEnumerator ResolveMove(int column, int y, GameObject finalPrefab, int effect, GameManager manager)
     {
         yield return WaitForColumn(column);
+        if (AudioController.Instance != null) AudioController.Instance.PlayTokenDrop();
         if (effect == 1)
         {
             FlipColumn(column);
@@ -134,6 +136,7 @@ public class BoardManager : MonoBehaviour
     {
         if (tokenGrid == null || column < 0 || column >= columns) return;
         if (!redTokenPrefab || !blueTokenPrefab) return;
+        if (AudioController.Instance != null) AudioController.Instance.PlayQueenFlip();
         for (int y = 0; y < rows; y++)
         {
             var old = tokenGrid[column, y];
@@ -151,6 +154,7 @@ public class BoardManager : MonoBehaviour
     public void ClearColumn(int column)
     {
         if (tokenGrid == null || column < 0 || column >= columns) return;
+        if (AudioController.Instance != null) AudioController.Instance.PlayCleanerClear();
         for (int y = 0; y < rows; y++)
         {
             if (tokenGrid[column, y]) Destroy(tokenGrid[column, y]);
