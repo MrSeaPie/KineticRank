@@ -70,7 +70,8 @@ public class GameManager : MonoBehaviour
         if (player != null) player.enabled = false;
         bool draw = result == EvaluationResult.Draw;
         bool redWins = result == EvaluationResult.RedWin;
-        if (SoloSettings.Enabled) RecordSoloResult(draw, redWins);
+        if (PuzzleSettings.Enabled) RecordPuzzleResult(draw, redWins);
+        else if (SoloSettings.Enabled) RecordSoloResult(draw, redWins);
         else
         {
             if (draw) SaveManager.RecordDraw();
@@ -84,6 +85,12 @@ public class GameManager : MonoBehaviour
                 draw ? Color.white : redWins ? Color.red : Color.cyan);
         if (backToMenuButton != null) backToMenuButton.SetActive(true);
         StartCoroutine(ShowRematchHint());
+    }
+
+    // Puzzle results only mark the puzzle solved; ranked Elo and the solo ladder are never touched.
+    static void RecordPuzzleResult(bool draw, bool redWins)
+    {
+        if (!draw && redWins == PuzzleSettings.AttackerIsRed) PuzzleProgress.MarkSolved(PuzzleSettings.CurrentId);
     }
 
     // Solo matches go to the separate solo ladder; ranked Elo is never touched.

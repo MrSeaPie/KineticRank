@@ -17,7 +17,9 @@ public class SoloBotDriver : MonoBehaviour
 
     float readyAt = -1f;
 
-    public bool IsBotTurn => SoloSettings.Enabled && player != null && player.IsRedTurn == SoloSettings.BotPlaysRed;
+    // Puzzles drive their own forced-reply defender, so the solo bot stays out of them
+    public bool IsBotTurn => !PuzzleSettings.Enabled && SoloSettings.Enabled && player != null
+        && player.IsRedTurn == SoloSettings.BotPlaysRed;
 
     void Update()
     {
