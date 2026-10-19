@@ -45,8 +45,11 @@ namespace KineticRank.Tests.EditMode
         {
             foreach (var puzzle in PuzzlePack.Puzzles)
             {
-                bool hasWin = PuzzleVerifier.HasForcedWin(puzzle.Start, puzzle.MovesN);
-                Assert.IsTrue(hasWin, $"Puzzle {puzzle.Id} ({puzzle.Title}) should have forced win in {puzzle.MovesN} moves.");
+                Assert.IsTrue(PuzzleVerifier.IsValidPuzzle(puzzle.Start, puzzle.MovesN),
+                    $"Puzzle {puzzle.Id} ({puzzle.Title}) must be a valid puzzle with unique forced winning solution in {puzzle.MovesN} moves.");
+                var winningMoves = PuzzleVerifier.WinningFirstMoves(puzzle.Start, puzzle.MovesN);
+                Assert.AreEqual(1, winningMoves.Count,
+                    $"Puzzle {puzzle.Id} ({puzzle.Title}) must have exactly 1 winning first move.");
             }
         }
 
