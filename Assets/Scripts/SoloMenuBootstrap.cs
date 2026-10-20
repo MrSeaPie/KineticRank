@@ -12,6 +12,8 @@ using KineticRank.Logic;
 public class SoloMenuBootstrap : MonoBehaviour
 {
     const float ButtonGap = 16f;
+    const float TierPanelDrop = 70f;
+    static readonly Vector2 TierButtonGrow = new Vector2(1.25f, 1.2f);
 
     MainMenuController menu;
     GameObject mainButtons;
@@ -74,10 +76,19 @@ public class SoloMenuBootstrap : MonoBehaviour
         solo.transform.SetSiblingIndex(play.transform.GetSiblingIndex() + 1);
         solo.onClick.AddListener(OpenTiers);
 
-        string[] names = System.Enum.GetNames(typeof(BotTier));
-        var tierButtons = new Button[names.Length];
-        for (int i = 0; i < names.Length; i++)
-            tierButtons[i] = CloneButton(play, tierPanel.transform, names[i] + "Button", names[i]);
+        // Taller, wider tier buttons with the difficulty spelled out; the panel sits lower so it clears the title
+        if (tierPanel.transform is RectTransform panelRect)
+            panelRect.anchoredPosition -= new Vector2(0f, TierPanelDrop);
+        AddHeading(play, tierPanel.transform, "Choose your opponent");
+
+        var tiers = (BotTier[])System.Enum.GetValues(typeof(BotTier));
+        var tierButtons = new Button[tiers.Length];
+        for (int i = 0; i < tiers.Length; i++)
+        {
+            tierButtons[i] = CloneButton(play, tierPanel.transform, tiers[i] + "Button", TierLabel(tiers[i]));
+            if (tierButtons[i].transform is RectTransform rect)
+                rect.sizeDelta = new Vector2(rect.sizeDelta.x * TierButtonGrow.x, rect.sizeDelta.y * TierButtonGrow.y);
+        }
         firstTier = tierButtons[0];
 
         CloneButton(play, tierPanel.transform, "BackButton", "Back").onClick.AddListener(CloseTiers);
@@ -88,6 +99,28 @@ public class SoloMenuBootstrap : MonoBehaviour
         panel.tierButtons = tierButtons;
 
         KeepClearOfSummary(group as RectTransform);
+    }
+
+    // "Oak · Medium" with "Looks 4 moves ahead" underneath
+    static string TierLabel(BotTier tier) =>
+        $"<b>{tier}</b>  ·  {BotTiers.Difficulty(tier)}\n<size=60%>{BotTiers.LookAhead(tier)}</size>";
+
+    // Plain text line above the tier buttons, in the buttons' font
+    static void AddHeading(Button style, Transform parent, string content)
+    {
+        var go = new GameObject("TierHeading", typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(parent, false);
+        var text = go.GetComponent<TextMeshProUGUI>();
+        var source = style.GetComponentInChildren<TMP_Text>(true);
+        if (source) text.font = source.font;
+        text.text = content;
+        text.fontSize = 30;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+        text.raycastTarget = false;
+        if (style.transform is RectTransform styleRect)
+            ((RectTransform)go.transform).sizeDelta = new Vector2(styleRect.sizeDelta.x * TierButtonGrow.x, 44f);
+        go.transform.SetAsFirstSibling();
     }
 
     static Button CloneButton(Button source, Transform parent, string name, string label)

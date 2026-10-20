@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using KineticRank.Logic;
 
 public class PlayerController : MonoBehaviour
@@ -27,11 +28,17 @@ public class PlayerController : MonoBehaviour
     // Read-only state for HUD display
     public bool IsRedTurn => isRedTurn;
     public string CurrentPieceName => currentPiece.ToString();
+    public MoveKind SelectedKind => currentPiece == PieceType.Queen ? MoveKind.Queen
+                                  : currentPiece == PieceType.Cleaner ? MoveKind.Cleaner
+                                  : MoveKind.Normal;
     public bool QueenAvailable(bool red)   => red ? !redQueenUsed   : !blueQueenUsed;
     public bool CleanerAvailable(bool red) => red ? !redCleanerUsed : !blueCleanerUsed;
 
     // Raised after every successful placement (mouse, bot or puzzle reply): column, move kind, mover was Red
     public static event Action<int, MoveKind, bool> MovePlaced;
+
+    // True while the side to move takes mouse/keys (not the Solo bot or the puzzle defender)
+    public bool IsHumanTurn => !IsBotTurn && !IsPuzzleDefenderTurn;
 
     // Puzzle/tutorial entry: take side to move and power-up availability from a loaded position (pair with BoardManager.LoadPosition)
     public void LoadTurnState(GameState s)
@@ -83,10 +90,30 @@ public class PlayerController : MonoBehaviour
         {
             if (board == null || Camera.main == null) return;
 
+            // A click on the token panels selects a token; it never drops one
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
+
             var world = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             int col = BoardManager.WorldToColumn(world.x);
 
             TryPlace(col, currentPiece);
+        }
+    }
+
+    // Token tray entry: same guards and sounds as the N / Q / C keys
+    public void Select(MoveKind kind)
+    {
+        if (!enabled) return;
+        if (GameManager.Instance != null && (GameManager.Instance.IsInputLocked || GameManager.Instance.IsMatchOver))
+            return;
+        if (!IsHumanTurn) return;
+
+        if (kind == MoveKind.Queen) TrySelect(PieceType.Queen);
+        else if (kind == MoveKind.Cleaner) TrySelect(PieceType.Cleaner);
+        else
+        {
+            currentPiece = PieceType.Normal;
+            if (AudioController.Instance != null) AudioController.Instance.PlayTokenSelect();
         }
     }
 
