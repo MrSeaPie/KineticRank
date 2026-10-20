@@ -14,7 +14,7 @@ public class PuzzleMenuBootstrap : MonoBehaviour
     const float ButtonGap = 16f;
     const float ListPanelDrop = 70f;
     const float CellGap = 12f;
-    const int Columns = 2;
+    const int Columns = 3;
     const float CellHeightScale = 1f;
     const float MinLabelSize = 16f;
     const float LabelSidePadding = 26f;
@@ -83,7 +83,7 @@ public class PuzzleMenuBootstrap : MonoBehaviour
         if (listPanel.transform is RectTransform panelRect)
             panelRect.anchoredPosition -= new Vector2(0f, ListPanelDrop);
 
-        // Two columns of full-height buttons; MenuLayoutFit shrinks the panel if a window is too short for it
+        // Three columns of full-height buttons (22+ puzzles); MenuLayoutFit shrinks the panel if a window is too short for it
         var cell = play.transform is RectTransform playRect
             ? new Vector2(playRect.sizeDelta.x, playRect.sizeDelta.y * CellHeightScale)
             : new Vector2(320f, 64f);
