@@ -34,6 +34,9 @@ public class PlayerController : MonoBehaviour
     public bool QueenAvailable(bool red)   => red ? !redQueenUsed   : !blueQueenUsed;
     public bool CleanerAvailable(bool red) => red ? !redCleanerUsed : !blueCleanerUsed;
 
+    // Raised after every successful placement (mouse, bot or puzzle reply): column, move kind, mover was Red
+    public static event Action<int, MoveKind, bool> MovePlaced;
+
     // True while the side to move takes mouse/keys (not the Solo bot or the puzzle defender)
     public bool IsHumanTurn => !IsBotTurn && !IsPuzzleDefenderTurn;
 
@@ -193,6 +196,11 @@ public class PlayerController : MonoBehaviour
             isRedTurn = !isRedTurn;
             // always go back to Normal after a drop
             currentPiece = PieceType.Normal;
+            // notify listeners (puzzle runtime) with the move just made; the mover is the side that no longer has the turn
+            var kind = piece == PieceType.Queen ? MoveKind.Queen
+                     : piece == PieceType.Cleaner ? MoveKind.Cleaner
+                     : MoveKind.Normal;
+            MovePlaced?.Invoke(col, kind, !isRedTurn);
         }
         else
         {
