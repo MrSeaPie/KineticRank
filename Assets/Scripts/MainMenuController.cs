@@ -79,8 +79,9 @@ public class MainMenuController : MonoBehaviour
     {
         if (SceneFader.IsFading) return;
 
-        // Hot-seat ranked match: a previous solo choice must not carry over
+        // Hot-seat ranked match: a previous solo or puzzle choice must not carry over
         SoloSettings.Clear();
+        ClearPuzzle();
         LoadMatch();
     }
 
@@ -89,8 +90,29 @@ public class MainMenuController : MonoBehaviour
     {
         if (SceneFader.IsFading) return;
 
+        ClearPuzzle();
         SoloSettings.StartSolo(tier);
         if (!LoadMatch()) SoloSettings.Clear();
+    }
+
+    // Puzzle from PuzzleCatalog (called by the Puzzles panel); PuzzleMatchDriver takes over in Match
+    public void PlayPuzzle(PuzzleEntry entry)
+    {
+        if (SceneFader.IsFading) return;
+        if (entry == null || entry.Start == null) return;
+
+        SoloSettings.Clear();
+        // The side to move in the start position is the side the player solves for
+        bool attackerIsRed = new PuzzleSession(entry.Start, entry.MovesN).AttackerIsRed;
+        PuzzleSettings.StartPuzzle(entry.Id, attackerIsRed);
+        PuzzleMatchDriver.Begin(entry.Start, entry.MovesN);
+        if (!LoadMatch()) ClearPuzzle();
+    }
+
+    static void ClearPuzzle()
+    {
+        PuzzleSettings.Clear();
+        PuzzleMatchDriver.Clear();
     }
 
     bool LoadMatch()
