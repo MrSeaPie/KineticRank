@@ -71,6 +71,8 @@ public class GameManager : MonoBehaviour
         bool draw = result == EvaluationResult.Draw;
         bool redWins = result == EvaluationResult.RedWin;
         if (PuzzleSettings.Enabled) RecordPuzzleResult(draw, redWins);
+        // Traditional matches are always casual: no save stats, ranked Elo or solo ladder, even against a bot.
+        else if (TraditionalSettings.Enabled) { }
         else if (SoloSettings.Enabled) RecordSoloResult(draw, redWins);
         else
         {
