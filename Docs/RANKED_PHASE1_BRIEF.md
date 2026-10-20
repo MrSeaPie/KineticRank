@@ -45,7 +45,7 @@ KineticRank is a competitive game, and players need a rank to climb: Bronze, Sil
 - Calibrate the bot ratings from data, don't guess them. Use the self-play harness to play adjacent tiers against each other, alternating who starts, and set the rating gaps so Elo's expected scores match the measured ones. Anchor Pine at 800 and cap any single gap at 400. Put the measured numbers and the final ratings in `Docs/RANKED_RATINGS.md`. A reasonable starting guess before calibration: Pine 800, Birch 1000, Oak 1200, Walnut 1400, Ebony 1600.
 - Solo gets a "Ranked match" button that picks the bot whose rating is closest to yours, like matchmaking. On a tie it picks the stronger bot. The button shows who you'll face, e.g. "Ranked match: Oak (1200)".
 - The existing casual Solo stays as it is: you pick any bot, and your rank doesn't change.
-- Puzzles, the tutorial, the daily puzzle and hot-seat never change your rank.
+- Puzzles, the tutorial, the daily puzzle, hot-seat and Traditional mode never change your rank.
 
 ## 3. Rank display
 
@@ -77,6 +77,15 @@ KineticRank is a competitive game, and players need a rank to climb: Bronze, Sil
 - The bot's thinking doesn't count against it, so it never times out.
 - Offline, the How to play overlay pauses the clock. Online will be different, but that's Phase 2.
 
+## 6. Traditional mode (added by the owner)
+
+- A second way to play: the same 7 x 6 board, four in a row and the full-column shift, but no Queen and no Cleaner.
+- It's in the main menu as "Traditional", for hot-seat and for Solo against any bot tier. Alternating starts apply here too.
+- Start it with every power-up already unavailable (`GameState.FromGrid` takes the four power-up flags; the puzzles already do this), so `Bot` only ever plays Normal moves. Don't change the rules code for this.
+- The side panels show only the Normal token in this mode: no Queen or Cleaner slots, and Q / C do nothing. Label the mode on screen ("Traditional"), and give How to play a Traditional version without the power-up lines.
+- It's casual for now: it never changes your rank. A separate Traditional ladder can come later if I ask for it.
+- Add a Traditional run to the fairness tester (style round-robin, or equal-depth pairings, with no power-ups) and report its first-mover share next to the standard mode.
+
 ## Rules for this task
 
 - Don't change the game rules (`GameState`, `BoardManager`) or the fairness harness's baseline.
@@ -92,4 +101,5 @@ KineticRank is a competitive game, and players need a rank to climb: Bronze, Sil
 - Ranked Solo can be played from the menu. Your rank and its changes show on the menu, in the match and after each game.
 - Match records save, and replay tests pass.
 - The move clock works in ranked games and a timeout loses the game, with a PlayMode test.
+- Traditional mode can be played hot-seat and against every bot, never offers a power-up, and its fairness numbers are in the report.
 - EditMode and PlayMode pass, and there's a short note for me in the inbox saying what's done and what Phase 2 will need.
