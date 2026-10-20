@@ -39,8 +39,8 @@ namespace KineticRank.Logic
                 1),
             new PuzzleDef(
                 "puz_05_shift_drop",
-                "Kinetic Downshift",
-                "Drop a token into a full column to shift and align four.",
+                "Descending Diagonal",
+                "Find the descending diagonal four-in-a-row.",
                 CreatePuzzle05(),
                 1),
             new PuzzleDef(
