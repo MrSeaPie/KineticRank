@@ -16,6 +16,15 @@ namespace KineticRank.Logic
     {
         static readonly int[] Depths = { 1, 2, 4, 6, 8 };
         static readonly string[] Difficulties = { "Beginner", "Easy", "Medium", "Hard", "Expert" };
+        // How each tier plays, in player terms (search depths 1 / 2 / 4 / 6 / 8 behind the scenes)
+        static readonly string[] Blurbs =
+        {
+            "Still learning the game",
+            "Blocks your obvious threats",
+            "Thinks a few moves ahead",
+            "Sets traps and spots yours",
+            "Very hard to beat"
+        };
 
         public static int Depth(BotTier tier) => Depths[Index(tier)];
 
@@ -25,12 +34,8 @@ namespace KineticRank.Logic
         // "Oak (Medium)"
         public static string Title(BotTier tier) => $"{tier} ({Difficulty(tier)})";
 
-        // "Looks 4 moves ahead"; a move is one player's turn
-        public static string LookAhead(BotTier tier)
-        {
-            int depth = Depth(tier);
-            return depth == 1 ? "Looks 1 move ahead" : $"Looks {depth} moves ahead";
-        }
+        // One line on how the tier plays, e.g. "Thinks a few moves ahead" for Oak
+        public static string Blurb(BotTier tier) => Blurbs[Index(tier)];
 
         static int Index(BotTier tier)
         {

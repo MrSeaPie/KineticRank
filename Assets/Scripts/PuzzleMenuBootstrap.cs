@@ -15,7 +15,9 @@ public class PuzzleMenuBootstrap : MonoBehaviour
     const float ListPanelDrop = 70f;
     const float CellGap = 12f;
     const int Columns = 2;
-    const float CellHeightScale = 0.8f;
+    const float CellHeightScale = 1f;
+    const float MinLabelSize = 16f;
+    const float LabelSidePadding = 26f;
 
     MainMenuController menu;
     GameObject mainButtons;
@@ -81,7 +83,7 @@ public class PuzzleMenuBootstrap : MonoBehaviour
         if (listPanel.transform is RectTransform panelRect)
             panelRect.anchoredPosition -= new Vector2(0f, ListPanelDrop);
 
-        // Two columns of slightly shorter buttons so a full pack still fits on screen
+        // Two columns of full-height buttons; MenuLayoutFit shrinks the panel if a window is too short for it
         var cell = play.transform is RectTransform playRect
             ? new Vector2(playRect.sizeDelta.x, playRect.sizeDelta.y * CellHeightScale)
             : new Vector2(320f, 64f);
@@ -107,6 +109,16 @@ public class PuzzleMenuBootstrap : MonoBehaviour
             var entry = all[i];
             entryButtons[i] = CloneButton(play, list.transform, "Puzzle_" + entry.Id, "");
             entryButtons[i].onClick.AddListener(() => Choose(entry));
+            // Long titles ("Direct Horizontal Four") shrink to fit the cell instead of spilling out of the button
+            var label = entryButtons[i].GetComponentInChildren<TMP_Text>(true);
+            if (label)
+            {
+                label.enableAutoSizing = true;
+                label.fontSizeMax = label.fontSize;
+                label.fontSizeMin = MinLabelSize;
+                // The label spans the whole button, rounded ends included; keep the text on the flat wood
+                label.margin = new Vector4(LabelSidePadding, 0f, LabelSidePadding, 0f);
+            }
         }
         firstEntry = entryButtons[0];
 

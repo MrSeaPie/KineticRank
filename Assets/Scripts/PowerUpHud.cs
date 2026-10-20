@@ -12,6 +12,8 @@ public class PowerUpHud : MonoBehaviour
     public const float ReferenceWidth = 1920f, ReferenceHeight = 1080f;
     public const float PanelWidth = 320f, EdgeMargin = 36f, BoardGap = 24f;
     const float PanelHeight = 600f, SlotHeight = 140f, SlotGap = 14f, SlotTop = 126f;
+    // Reference pixels kept free for the rating line (top left) and the F1 hint (bottom left)
+    const float TopReserve = 220f, BottomReserve = 56f;
 
     static readonly Color Ivory = new Color(0.953f, 0.910f, 0.824f);
     static readonly Color Gold = new Color(1f, 0.78f, 0.25f);
@@ -224,9 +226,23 @@ public class PowerUpHud : MonoBehaviour
         canvasObject.SetActive(visible);
         if (!visible) return;
 
+        FitPanels();
         var manager = GameManager.Instance;
         bool resolving = manager != null && manager.IsResolvingMove;
         foreach (var side in sides) RefreshSide(side, resolving);
+    }
+
+    // Centres both panels between the rating line and the F1 hint, shrinking them on short windows
+    void FitPanels()
+    {
+        float height = ((RectTransform)canvasObject.transform).rect.height;
+        float scale = Mathf.Clamp((height - TopReserve - BottomReserve) / PanelHeight, 0.4f, 1f);
+        float y = (BottomReserve - TopReserve) * 0.5f;
+        foreach (var side in sides)
+        {
+            side.root.localScale = new Vector3(scale, scale, 1f);
+            side.root.anchoredPosition = new Vector2(side.red ? EdgeMargin : -EdgeMargin, y);
+        }
     }
 
     void RefreshSide(Side side, bool resolving)

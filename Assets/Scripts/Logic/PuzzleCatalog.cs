@@ -22,8 +22,8 @@ namespace KineticRank.Logic
         }
     }
 
-    // Registry of puzzles shown in the Puzzles menu. Ships with a few seed positions (proven unique in EditMode tests)
-    // and accepts more through Register, so the menu does not depend on PuzzlePack being merged.
+    // Registry of puzzles shown in the Puzzles menu: the seed positions (proven unique in EditMode tests) followed by
+    // the curated PuzzlePack. More can be added through Register.
     public static class PuzzleCatalog
     {
         const int R = (int)CellOwner.Red;
@@ -32,7 +32,15 @@ namespace KineticRank.Logic
         static readonly List<PuzzleEntry> entries = new List<PuzzleEntry>();
         static readonly Dictionary<string, PuzzleEntry> byId = new Dictionary<string, PuzzleEntry>();
 
-        static PuzzleCatalog() => Register(Seeds());
+        static PuzzleCatalog() => Register(BuiltIns());
+
+        // Seeds first, then every PuzzlePack puzzle in pack order
+        public static IEnumerable<PuzzleEntry> BuiltIns()
+        {
+            foreach (var seed in Seeds()) yield return seed;
+            foreach (var def in PuzzlePack.All)
+                yield return new PuzzleEntry(def.Id, def.Title, def.Hint, def.Start, def.MovesN);
+        }
 
         public static IReadOnlyList<PuzzleEntry> All => entries;
 
@@ -60,12 +68,12 @@ namespace KineticRank.Logic
             return added;
         }
 
-        // Drops anything registered later and restores the seeds; used by tests to keep the static state predictable
+        // Drops anything registered later and restores the built-in puzzles; used by tests to keep the static state predictable
         public static void ResetToSeeds()
         {
             entries.Clear();
             byId.Clear();
-            Register(Seeds());
+            Register(BuiltIns());
         }
 
         public static IEnumerable<PuzzleEntry> Seeds()
