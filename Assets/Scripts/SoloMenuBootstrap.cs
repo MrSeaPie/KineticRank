@@ -101,9 +101,9 @@ public class SoloMenuBootstrap : MonoBehaviour
         KeepClearOfSummary(group as RectTransform);
     }
 
-    // "Oak · Medium" with "Looks 4 moves ahead" underneath
+    // "Oak · Medium" with "Thinks a few moves ahead" underneath
     static string TierLabel(BotTier tier) =>
-        $"<b>{tier}</b>  ·  {BotTiers.Difficulty(tier)}\n<size=60%>{BotTiers.LookAhead(tier)}</size>";
+        $"<b>{tier}</b>  ·  {BotTiers.Difficulty(tier)}\n<size=60%>{BotTiers.Blurb(tier)}</size>";
 
     // Plain text line above the tier buttons, in the buttons' font
     static void AddHeading(Button style, Transform parent, string content)
