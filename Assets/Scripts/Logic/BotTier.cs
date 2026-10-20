@@ -14,10 +14,10 @@ namespace KineticRank.Logic
 
     public static class BotTiers
     {
-        static readonly int[] Depths = { 1, 2, 4, 6, 8 };
+        static readonly int[] Depths = { 1, 2, 3, 4, 5 };
         static readonly string[] Difficulties = { "Beginner", "Easy", "Medium", "Hard", "Expert" };
         static readonly int[] Ratings = { 800, 1000, 1200, 1400, 1600 };
-        // How each tier plays, in player terms (search depths 1 / 2 / 4 / 6 / 8 behind the scenes)
+        // How each tier plays, in player terms (search depths 1 / 2 / 3 / 4 / 5 behind the scenes)
         static readonly string[] Blurbs =
         {
             "Still learning the game",
@@ -73,5 +73,19 @@ namespace KineticRank.Logic
             if (i < 0 || i >= Depths.Length) throw new ArgumentOutOfRangeException(nameof(tier));
             return i;
         }
+    }
+
+    // Backwards-compatibility alias for BotTiers
+    public static class BotTierInfo
+    {
+        public static int Count => BotTiers.Count;
+        public static int Depth(BotTier tier) => BotTiers.Depth(tier);
+        public static string Difficulty(BotTier tier) => BotTiers.Difficulty(tier);
+        public static int Rating(BotTier tier) => BotTiers.Rating(tier);
+        public static string Title(BotTier tier) => BotTiers.Title(tier);
+        public static string Blurb(BotTier tier) => BotTiers.Blurb(tier);
+        public static double ExpectedScore(int playerRating, BotTier tier) => BotTiers.ExpectedScore(playerRating, tier);
+        public static int RatingDelta(int playerRating, BotTier tier, double actualScore, int kFactor = 32) => BotTiers.RatingDelta(playerRating, tier, actualScore, kFactor);
+        public static BotTier RecommendedTier(int playerRating) => BotTiers.RecommendedTier(playerRating);
     }
 }
