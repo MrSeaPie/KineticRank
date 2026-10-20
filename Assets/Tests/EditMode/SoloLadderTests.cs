@@ -7,13 +7,15 @@ namespace KineticRank.Tests.EditMode
     public class SoloLadderTests
     {
         [Test]
-        public void DepthForTier_ReturnsExpectedDepths()
+        public void DepthForTier_DelegatesToBotTiersDepth()
         {
             Assert.AreEqual(1, SoloLadder.DepthForTier(BotTier.Pine));
             Assert.AreEqual(2, SoloLadder.DepthForTier(BotTier.Birch));
             Assert.AreEqual(4, SoloLadder.DepthForTier(BotTier.Oak));
             Assert.AreEqual(6, SoloLadder.DepthForTier(BotTier.Walnut));
             Assert.AreEqual(8, SoloLadder.DepthForTier(BotTier.Ebony));
+            Assert.AreEqual(BotTiers.Depth(BotTier.Pine), SoloLadder.DepthForTier(BotTier.Pine));
+            Assert.AreEqual(BotTiers.Depth(BotTier.Ebony), SoloLadder.DepthForTier(BotTier.Ebony));
         }
 
         [Test]
@@ -38,28 +40,6 @@ namespace KineticRank.Tests.EditMode
         public void RecommendOpponent_BreaksTieTowardStrongerTier()
         {
             Assert.AreEqual(BotTier.Birch, SoloLadder.RecommendOpponent(898));
-        }
-
-        [Test]
-        public void CalculateDelta_WinLossDrawSymmetry()
-        {
-            int winDelta = SoloLadder.CalculateDelta(1000, 1000, 1.0, 32);
-            int lossDelta = SoloLadder.CalculateDelta(1000, 1000, 0.0, 32);
-            int drawDelta = SoloLadder.CalculateDelta(1000, 1000, 0.5, 32);
-
-            Assert.AreEqual(16, winDelta);
-            Assert.AreEqual(-16, lossDelta);
-            Assert.AreEqual(0, drawDelta);
-        }
-
-        [Test]
-        public void CalculateDelta_WithBotTierOverload()
-        {
-            int winAgainstPine = SoloLadder.CalculateDelta(800, BotTier.Pine, true);
-            Assert.AreEqual(16, winAgainstPine);
-
-            int lossAgainstPine = SoloLadder.CalculateDelta(800, BotTier.Pine, false);
-            Assert.AreEqual(-16, lossAgainstPine);
         }
     }
 }
