@@ -4,15 +4,16 @@ using System.Collections.Generic;
 namespace KineticRank.Logic
 {
     // Ratings for the Solo bot tiers, on the same scale as player ratings. SoloLadder uses them to pick the nearest opponent.
-    // The table holds starting values until the calibration in Docs/RANKED_RATINGS.md replaces them:
+    // The values come from the calibration in Docs/RANKED_RATINGS.md:
     // adjacent tiers play each other with alternating starts, and each measured score becomes a capped Elo gap above Pine.
     public static class BotTierRatings
     {
         public const int Anchor = 800;   // Pine
         public const int MaxGap = 400;   // cap on each adjacent-tier gap
 
-        // Indexed by BotTier, weakest first. Starting guess, not yet measured.
-        static readonly int[] Ratings = { 800, 1000, 1200, 1400, 1600 };
+        // Indexed by BotTier, weakest first. Pine-Birch (196) and Birch-Oak (259) are measured;
+        // Oak-Walnut and Walnut-Ebony still use the brief's +200 guess until their calibration runs land.
+        static readonly int[] Ratings = { 800, 996, 1255, 1455, 1655 };
 
         // All tiers by rating, lowest first. Equal ratings keep the weaker tier first.
         public static IReadOnlyList<BotTier> TiersByRating { get; } = SortByRating();
