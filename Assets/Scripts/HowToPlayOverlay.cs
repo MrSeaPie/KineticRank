@@ -26,7 +26,7 @@ public class HowToPlayOverlay : MonoBehaviour
         "After a Queen or Cleaner you are back on Normal.\n\n" +
         "<b>Full column?</b>  You can still play there. The bottom token drops out, the rest slide down, and yours lands on top.\n" +
         "<b>Draw:</b>  if one move gives both colours four in a row, nobody wins.\n\n" +
-        "Enter: rematch      H: ratings      F1 or ?: this help\n" +
+        "Enter: rematch (after match)      H: ratings      F1 or ?: this help\n" +
         "<i>Click anywhere to close.</i>";
 
     GameObject panel;
