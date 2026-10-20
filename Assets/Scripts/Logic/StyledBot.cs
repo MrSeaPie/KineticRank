@@ -68,6 +68,29 @@ namespace KineticRank.Logic
             return tieBreak == null ? best[0] : best[tieBreak.Next(best.Count)];
         }
 
+        // Root negamax value of the position for the side to move, without move-kind biases or tie-breaks.
+        // Used by the swap-rule tester; ChooseMove is unchanged.
+        public static int Score(GameState state, int depth, BotStyle style)
+        {
+            if (state == null) throw new ArgumentNullException(nameof(state));
+            if (style == null) throw new ArgumentNullException(nameof(style));
+            if (depth < 1) throw new ArgumentOutOfRangeException(nameof(depth), "depth must be at least 1");
+            if (state.IsOver) throw new InvalidOperationException("The game is already over.");
+
+            int best = -Infinity;
+            bool any = false;
+            foreach (var move in Order)
+            {
+                if (!state.IsLegal(move)) continue;
+                any = true;
+                int score = -Negamax(state.Apply(move), depth - 1, -Infinity, -best, 1, style);
+                if (score > best) best = score;
+            }
+
+            if (!any) throw new InvalidOperationException("No legal moves.");
+            return best;
+        }
+
         static int Negamax(GameState state, int depth, int alpha, int beta, int ply, BotStyle style)
         {
             if (state.IsOver) return TerminalScore(state, ply);
