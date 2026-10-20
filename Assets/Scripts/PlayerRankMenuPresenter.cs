@@ -23,6 +23,12 @@ public sealed class PlayerRankMenuPresenter : MonoBehaviour
         if (group.GetComponentInChildren<PlayerRankMenuPresenter>(true)) return;
         var root = new GameObject("PlayerRank", typeof(RectTransform), typeof(LayoutElement), typeof(Image));
         root.transform.SetParent(group, false);
+        // Buttons does not control child dimensions: preferredHeight alone leaves
+        // a newly created RectTransform at its default 100 by 100 size.
+        var playRect = menu.playButton.transform as RectTransform;
+        float width = playRect ? playRect.rect.width : 360f;
+        if (width <= 0f) width = 360f;
+        root.GetComponent<RectTransform>().sizeDelta = new Vector2(width, 116f);
         root.GetComponent<LayoutElement>().preferredHeight = 116f;
         root.GetComponent<LayoutElement>().minHeight = 116f;
         var background = root.GetComponent<Image>();
