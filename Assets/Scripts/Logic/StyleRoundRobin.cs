@@ -90,7 +90,11 @@ namespace KineticRank.Logic
     // Built on StyledSelfPlay, which stays unchanged; with no seed every game is fully deterministic.
     public static class StyleRoundRobin
     {
-        public static RoundRobinReport Run(IReadOnlyList<BotStyle> styles, IReadOnlyList<IReadOnlyList<Move>> openings, int depth, int? seedBase, int maxPlies, bool includeMirrors)
+        public static RoundRobinReport Run(IReadOnlyList<BotStyle> styles, IReadOnlyList<IReadOnlyList<Move>> openings, int depth, int? seedBase, int maxPlies, bool includeMirrors) =>
+            Run(GameState.Initial(), styles, openings, depth, seedBase, maxPlies, includeMirrors);
+
+        // Same round-robin from a given start position, e.g. StyledSelfPlay.TraditionalStart() for the no-power-up mode
+        public static RoundRobinReport Run(GameState start, IReadOnlyList<BotStyle> styles, IReadOnlyList<IReadOnlyList<Move>> openings, int depth, int? seedBase, int maxPlies, bool includeMirrors)
         {
             if (styles == null) throw new ArgumentNullException(nameof(styles));
             if (openings == null) throw new ArgumentNullException(nameof(openings));
@@ -114,10 +118,10 @@ namespace KineticRank.Logic
                     var a = styles[i];
                     var b = styles[j];
                     // Both colour orders use the same seeds, so each opening gets the same seed either way round
-                    var aAsRed = StyledSelfPlay.Run(openings, a, b, depth, depth, seedBase, maxPlies);
+                    var aAsRed = StyledSelfPlay.Run(start, openings, a, b, depth, depth, seedBase, maxPlies);
                     var bAsRed = i == j
                         ? new StyledReport(new List<StyledGame>())
-                        : StyledSelfPlay.Run(openings, b, a, depth, depth, seedBase, maxPlies);
+                        : StyledSelfPlay.Run(start, openings, b, a, depth, depth, seedBase, maxPlies);
                     pairings.Add(new StylePairing(a.Name, b.Name, aAsRed, bAsRed));
                 }
             }

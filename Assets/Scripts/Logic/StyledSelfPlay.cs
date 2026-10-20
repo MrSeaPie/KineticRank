@@ -67,11 +67,18 @@ namespace KineticRank.Logic
     // SelfPlay stays unchanged; with no seed every game here is fully deterministic.
     public static class StyledSelfPlay
     {
+        // Traditional mode (Phase 1 brief): empty board, Red to move, no Queen or Cleaner for either side
+        public static GameState TraditionalStart() =>
+            GameState.FromGrid(new int[GameState.Columns, GameState.Rows], true, false, false, false, false);
+
         // Every two-ply opening over Normal/Queen/Cleaner that leaves the game in progress
-        public static List<IReadOnlyList<Move>> TwoPlyOpenings()
+        public static List<IReadOnlyList<Move>> TwoPlyOpenings() => TwoPlyOpenings(GameState.Initial());
+
+        // Same, from a given start; a start with no power-ups yields Normal-only openings
+        public static List<IReadOnlyList<Move>> TwoPlyOpenings(GameState start)
         {
+            if (start == null) throw new ArgumentNullException(nameof(start));
             var openings = new List<IReadOnlyList<Move>>();
-            var start = GameState.Initial();
             foreach (var first in start.LegalMoves())
             {
                 var afterFirst = start.Apply(first);
@@ -113,7 +120,12 @@ namespace KineticRank.Logic
 
         // seed null keeps both bots on their earliest-best-move rule; otherwise one Random breaks ties for both sides
         public static StyledGame PlayGame(IReadOnlyList<Move> opening, BotStyle redStyle, BotStyle blueStyle, int redDepth, int blueDepth, int? seed, int maxPlies)
+            => PlayGame(GameState.Initial(), opening, redStyle, blueStyle, redDepth, blueDepth, seed, maxPlies);
+
+        // Same, from a given start position (e.g. TraditionalStart); Plies counts from that start
+        public static StyledGame PlayGame(GameState start, IReadOnlyList<Move> opening, BotStyle redStyle, BotStyle blueStyle, int redDepth, int blueDepth, int? seed, int maxPlies)
         {
+            if (start == null) throw new ArgumentNullException(nameof(start));
             if (opening == null) throw new ArgumentNullException(nameof(opening));
             if (redStyle == null) throw new ArgumentNullException(nameof(redStyle));
             if (blueStyle == null) throw new ArgumentNullException(nameof(blueStyle));
@@ -121,7 +133,7 @@ namespace KineticRank.Logic
 
             var tieBreak = seed.HasValue ? new Random(seed.Value) : null;
             var seen = new Dictionary<string, int>();
-            var state = GameState.Initial();
+            var state = start;
             int maxRepeats = Visit(seen, state);
             int plies = 0;
 
@@ -148,14 +160,19 @@ namespace KineticRank.Logic
 
         // seedBase null plays every game unseeded; otherwise game i uses seedBase + i
         public static StyledReport Run(IEnumerable<IReadOnlyList<Move>> openings, BotStyle redStyle, BotStyle blueStyle, int redDepth, int blueDepth, int? seedBase, int maxPlies)
+            => Run(GameState.Initial(), openings, redStyle, blueStyle, redDepth, blueDepth, seedBase, maxPlies);
+
+        // Same, with every game starting from the given position
+        public static StyledReport Run(GameState start, IEnumerable<IReadOnlyList<Move>> openings, BotStyle redStyle, BotStyle blueStyle, int redDepth, int blueDepth, int? seedBase, int maxPlies)
         {
+            if (start == null) throw new ArgumentNullException(nameof(start));
             if (openings == null) throw new ArgumentNullException(nameof(openings));
             var games = new List<StyledGame>();
             int i = 0;
             foreach (var opening in openings)
             {
                 int? seed = seedBase.HasValue ? unchecked(seedBase.Value + i) : (int?)null;
-                games.Add(PlayGame(opening, redStyle, blueStyle, redDepth, blueDepth, seed, maxPlies));
+                games.Add(PlayGame(start, opening, redStyle, blueStyle, redDepth, blueDepth, seed, maxPlies));
                 i++;
             }
             return new StyledReport(games);

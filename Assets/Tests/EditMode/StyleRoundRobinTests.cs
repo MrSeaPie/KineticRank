@@ -14,10 +14,12 @@ namespace KineticRank.Tests.EditMode
         static List<IReadOnlyList<Move>> FewOpenings() => StyledSelfPlay.TwoPlyOpenings().Take(3).ToList();
 
         // The 49 Normal two-move openings from round 1, kept small so depth 4 stays affordable
-        static List<IReadOnlyList<Move>> TwoPlyNormalOpenings()
+        static List<IReadOnlyList<Move>> TwoPlyNormalOpenings() => TwoPlyNormalOpenings(GameState.Initial());
+
+        // Same opening set built from a given start, e.g. the Traditional (no power-up) start
+        static List<IReadOnlyList<Move>> TwoPlyNormalOpenings(GameState start)
         {
             var openings = new List<IReadOnlyList<Move>>();
-            var start = GameState.Initial();
             for (int a = 0; a < GameState.Columns; a++)
             {
                 var first = new Move(a, MoveKind.Normal);
@@ -39,6 +41,40 @@ namespace KineticRank.Tests.EditMode
             var openings = TwoPlyNormalOpenings();
             Assert.AreEqual(GameState.Columns * GameState.Columns, openings.Count);
             Assert.IsTrue(openings.All(o => o.Count == 2));
+        }
+
+        [Test]
+        public void TraditionalOpenings_MatchStandardNormalOpenings()
+        {
+            var standard = TwoPlyNormalOpenings();
+            var traditional = TwoPlyNormalOpenings(StyledSelfPlay.TraditionalStart());
+            Assert.AreEqual(standard.Count, traditional.Count);
+            for (int i = 0; i < standard.Count; i++)
+            {
+                Assert.AreEqual(standard[i][0].Column, traditional[i][0].Column);
+                Assert.AreEqual(standard[i][1].Column, traditional[i][1].Column);
+                Assert.AreEqual(MoveKind.Normal, traditional[i][0].Kind);
+                Assert.AreEqual(MoveKind.Normal, traditional[i][1].Kind);
+            }
+        }
+
+        [Test]
+        public void Run_FromTraditionalStart_PlaysEveryPairing()
+        {
+            var openings = TwoPlyNormalOpenings(StyledSelfPlay.TraditionalStart()).Take(3).ToList();
+            var report = StyleRoundRobin.Run(StyledSelfPlay.TraditionalStart(), TwoStyles, openings, 1, 0, 60, true);
+            Assert.AreEqual(3, report.Pairings.Count);
+            Assert.AreEqual(3 + 6 + 3, report.Games);
+            Assert.AreEqual(report.Games, report.FirstMoverWins + report.SecondMoverWins + report.Draws);
+            Assert.AreEqual(3, report.Openings);
+        }
+
+        [Test]
+        public void Run_DefaultStartMatchesExplicitInitialStart()
+        {
+            var a = StyleRoundRobin.Run(TwoStyles, FewOpenings(), 1, 5, 60, true);
+            var b = StyleRoundRobin.Run(GameState.Initial(), TwoStyles, FewOpenings(), 1, 5, 60, true);
+            Assert.AreEqual(a.ToText(), b.ToText());
         }
 
         [Test]
@@ -149,9 +185,28 @@ namespace KineticRank.Tests.EditMode
             RunAndWrite(3, TwoPlyNormalOpenings(), "fairness_round2_depth3_normal49.txt");
         }
 
-        static void RunAndWrite(int depth, List<IReadOnlyList<Move>> openings, string fileName)
+        // Phase 1 brief section 6: Traditional mode (all four power-up flags unavailable) on the same 49 openings,
+        // so first-mover share compares directly with the normal49 runs above
+        [Test, Explicit("Long fairness run"), Category("FairnessLong"), Timeout(86400000)]
+        public void RoundRobin_Traditional_Depth2_TwoPlyNormalOpenings()
         {
-            var report = StyleRoundRobin.Run(BotStyle.All, openings, depth, 1000, 160, true);
+            var start = StyledSelfPlay.TraditionalStart();
+            RunAndWrite(start, 2, TwoPlyNormalOpenings(start), "fairness_traditional_depth2_normal49.txt");
+        }
+
+        [Test, Explicit("Long fairness run"), Category("FairnessLong"), Timeout(86400000)]
+        public void RoundRobin_Traditional_Depth3_TwoPlyNormalOpenings()
+        {
+            var start = StyledSelfPlay.TraditionalStart();
+            RunAndWrite(start, 3, TwoPlyNormalOpenings(start), "fairness_traditional_depth3_normal49.txt");
+        }
+
+        static void RunAndWrite(int depth, List<IReadOnlyList<Move>> openings, string fileName) =>
+            RunAndWrite(GameState.Initial(), depth, openings, fileName);
+
+        static void RunAndWrite(GameState start, int depth, List<IReadOnlyList<Move>> openings, string fileName)
+        {
+            var report = StyleRoundRobin.Run(start, BotStyle.All, openings, depth, 1000, 160, true);
             var text = report.ToText();
             Directory.CreateDirectory("TestResults");
             File.WriteAllText(Path.Combine("TestResults", fileName), text);
