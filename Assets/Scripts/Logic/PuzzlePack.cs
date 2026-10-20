@@ -8,53 +8,51 @@ namespace KineticRank.Logic
         const int R = (int)CellOwner.Red;
         const int B = (int)CellOwner.Blue;
 
-        static int[,] EmptyGrid() => new int[7, 6];
-
-        static GameState StandardStart(int[,] grid, bool redToMove = true) =>
-            GameState.FromGrid(grid, redToMove, false, false, false, false);
+        static int[,] EmptyGrid() => new int[GameState.Columns, GameState.Rows];
+        static GameState StandardStart(int[,] grid, bool redTurn) => GameState.FromGrid(grid, redTurn, false, false, false, false);
 
         public static readonly IReadOnlyList<PuzzleDef> Puzzles = new List<PuzzleDef>
         {
             new PuzzleDef(
-                "puz_01_horizontal_win",
-                "First Strike",
-                "Complete the horizontal line of four.",
+                "puz_01_horizontal_line",
+                "Direct Horizontal Four",
+                "Complete the open horizontal line in one move.",
                 CreatePuzzle01(),
                 1),
             new PuzzleDef(
                 "puz_02_vertical_strike",
-                "Vertical Rise",
-                "Stack your token to finish the column.",
+                "Vertical Ascent",
+                "Stack the fourth token vertically to seal the win.",
                 CreatePuzzle02(),
                 1),
             new PuzzleDef(
-                "puz_03_ascending_diagonal",
+                "puz_03_diagonal_climb",
                 "Ascending Diagonal",
-                "Find the climbing diagonal to win.",
+                "Find the climbing diagonal four-in-a-row.",
                 CreatePuzzle03(),
                 1),
             new PuzzleDef(
-                "puz_04_split_horizontal",
-                "Bridging the Gap",
-                "Drop your piece between aligned tokens.",
+                "puz_04_split_threat",
+                "Split Threat",
+                "Fill the gap between tokens to complete the line.",
                 CreatePuzzle04(),
                 1),
             new PuzzleDef(
-                "puz_05_anti_diagonal",
-                "Falling Blade",
-                "Connect the downward diagonal slope.",
+                "puz_05_shift_drop",
+                "Kinetic Downshift",
+                "Drop a token into a full column to shift and align four.",
                 CreatePuzzle05(),
                 1),
             new PuzzleDef(
-                "puz_06_open_ended_fork",
-                "Dual Threat",
-                "Create an open-ended three that cannot be blocked.",
+                "puz_06_double_threat_setup",
+                "Double Threat Setup",
+                "Create an unblockable dual-threat fork.",
                 CreatePuzzle06(),
                 2),
             new PuzzleDef(
-                "puz_07_center_fork",
-                "Center Trap",
-                "Seize the center column to build an unstoppable double threat.",
+                "puz_07_block_and_counter",
+                "Counter-Attack Fork",
+                "Set up an inescapable two-way trap.",
                 CreatePuzzle07(),
                 2),
             new PuzzleDef(
@@ -76,6 +74,8 @@ namespace KineticRank.Logic
                 CreatePuzzle10(),
                 1)
         }.AsReadOnly();
+
+        public static IReadOnlyList<PuzzleDef> All => Puzzles;
 
         public static PuzzleDef GetById(string id)
         {
@@ -159,6 +159,7 @@ namespace KineticRank.Logic
         static GameState CreatePuzzle09()
         {
             var grid = EmptyGrid();
+            grid[1, 0] = B;
             grid[2, 0] = R; grid[2, 1] = R;
             grid[3, 0] = B; grid[3, 1] = B; grid[3, 2] = R;
             grid[4, 0] = R; grid[4, 1] = R; grid[4, 2] = B; grid[4, 3] = R;

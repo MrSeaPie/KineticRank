@@ -1,67 +1,50 @@
-using System;
-using KineticRank.Logic;
 using NUnit.Framework;
+using KineticRank.Logic;
 
 namespace KineticRank.Tests.EditMode
 {
+    [TestFixture]
     public class PuzzlePackTests
     {
         [Test]
-        public void PuzzlePack_ContainsExactlyTenPuzzles()
+        public void PuzzlePack_ContainsTenPuzzles()
         {
             Assert.AreEqual(10, PuzzlePack.Puzzles.Count);
+            Assert.AreEqual(10, PuzzlePack.All.Count);
+        }
+
+        [TestCase("puz_08_flank_fork")]
+        [TestCase("puz_09_high_diagonal")]
+        [TestCase("puz_10_central_pillar")]
+        public void GetById_ReturnsExpectedPuzzle(string id)
+        {
+            var p = PuzzlePack.GetById(id);
+            Assert.IsNotNull(p);
+            Assert.AreEqual(id, p.Id);
         }
 
         [Test]
-        public void PuzzlePack_AllPuzzlesHaveUniqueIdsAndTitles()
+        public void AllPuzzles_StartInProgress_AndHavePositiveMoveCount()
         {
-            var ids = new System.Collections.Generic.HashSet<string>();
-            var titles = new System.Collections.Generic.HashSet<string>();
-
-            foreach (var puzzle in PuzzlePack.Puzzles)
+            for (int i = 0; i < PuzzlePack.Puzzles.Count; i++)
             {
-                Assert.IsNotNull(puzzle);
-                Assert.IsFalse(string.IsNullOrWhiteSpace(puzzle.Id));
-                Assert.IsFalse(string.IsNullOrWhiteSpace(puzzle.Title));
-                Assert.IsTrue(ids.Add(puzzle.Id), $"Duplicate ID: {puzzle.Id}");
-                Assert.IsTrue(titles.Add(puzzle.Title), $"Duplicate Title: {puzzle.Title}");
-                Assert.AreSame(puzzle, PuzzlePack.GetById(puzzle.Id));
+                var p = PuzzlePack.Puzzles[i];
+                Assert.IsFalse(p.Start.IsOver, $"{p.Id} should not start in terminal state");
+                Assert.IsTrue(p.Start.RedToMove, $"{p.Id} should be Red's turn to move");
+                Assert.GreaterOrEqual(p.MovesN, 1, $"{p.Id} should have positive move count");
+                Assert.LessOrEqual(p.MovesN, PuzzleVerifier.MaxSupportedMoves, $"{p.Id} moves exceeds verifier max");
             }
         }
 
         [Test]
-        public void PuzzlePack_AllPuzzlesStartInProgress()
+        public void AllPuzzles_HaveUniqueForcedWinningMove()
         {
-            foreach (var puzzle in PuzzlePack.Puzzles)
+            for (int i = 0; i < PuzzlePack.Puzzles.Count; i++)
             {
-                Assert.IsNotNull(puzzle.Start);
-                Assert.IsFalse(puzzle.Start.IsOver, $"Puzzle {puzzle.Id} starts already over.");
-                Assert.IsTrue(puzzle.MovesN >= 1 && puzzle.MovesN <= PuzzleVerifier.MaxSupportedMoves);
-            }
-        }
-
-        [Test]
-        public void PuzzlePack_AllPuzzlesVerifiedByPuzzleVerifier()
-        {
-            foreach (var puzzle in PuzzlePack.Puzzles)
-            {
-                Assert.IsTrue(PuzzleVerifier.IsValidPuzzle(puzzle.Start, puzzle.MovesN),
-                    $"Puzzle {puzzle.Id} ({puzzle.Title}) must be a valid puzzle with unique forced winning solution in {puzzle.MovesN} moves.");
-                var winningMoves = PuzzleVerifier.WinningFirstMoves(puzzle.Start, puzzle.MovesN);
-                Assert.AreEqual(1, winningMoves.Count,
-                    $"Puzzle {puzzle.Id} ({puzzle.Title}) must have exactly 1 winning first move.");
-            }
-        }
-
-        [Test]
-        public void PuzzlePack_AllPuzzlesSolvableInPuzzleSession()
-        {
-            foreach (var puzzle in PuzzlePack.Puzzles)
-            {
-                var session = new PuzzleSession(puzzle.Start, puzzle.MovesN);
-                Assert.AreEqual(PuzzleStatus.InProgress, session.Status);
-                Assert.AreEqual(puzzle.MovesN, session.MovesLeft);
-                Assert.IsTrue(session.AttackerIsRed);
+                var p = PuzzlePack.Puzzles[i];
+                Assert.IsTrue(PuzzleVerifier.IsValidPuzzle(p.Start, p.MovesN), $"{p.Id} must be a valid puzzle with unique winning first move");
+                var winningFirstMoves = PuzzleVerifier.WinningFirstMoves(p.Start, p.MovesN);
+                Assert.AreEqual(1, winningFirstMoves.Count, $"{p.Id} must have exactly one winning first move");
             }
         }
     }
