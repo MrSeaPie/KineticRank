@@ -6,6 +6,8 @@ Harness: `Assets/Scripts/Logic/StyleRoundRobin.cs` (built on `StyledSelfPlay`, w
 
 Per-game stats: `Assets/Scripts/Logic/StyledGameRecorder.cs`. Tests: `Assets/Tests/EditMode/StyledGameRecorderTests.cs`.
 
+Extended per-game CSV rows: `Assets/Scripts/Logic/StyledGameCsv.cs`. Tests: `Assets/Tests/EditMode/StyledGameCsvTests.cs`.
+
 ## Method
 
 - Styles: `BotStyle.All` = Default, Positional, Hoarder, Spender, Attacker (see `BotStyle.cs`).
@@ -34,6 +36,16 @@ Per-game stats: `Assets/Scripts/Logic/StyledGameRecorder.cs`. Tests: `Assets/Tes
 | `final_move_kind` | Kind of the move that completed the winning line (empty for draws) |
 | `red_queen_plies`, `red_cleaner_plies`, `blue_queen_plies`, `blue_cleaner_plies` | 1-based plies where that side used the power-up, separated by `;` |
 | `winner_used_queen`, `winner_used_cleaner` | `1` if the winner used that power-up at least once, else `0` |
+
+### Extended rows (`StyledGameCsv`)
+
+`StyledGameCsv.Header` puts four columns in front of `StyledGameRecord.CsvHeader`; the rest of each row is exactly `record.ToCsvRow()`. `StyledGameCsv.Row(game, record, redDepth, blueDepth)` throws if the `StyledGame` and the record describe different games; `PlayRow` plays and records in one call.
+
+| Column | Meaning |
+| --- | --- |
+| `opening` | Opening moves as `Kind@Column`, separated by `;` (`StyledGameCsv.OpeningCell`; `ParseOpening` reads it back) |
+| `red_depth`, `blue_depth` | Search depth of each side |
+| `max_repeats` | Highest number of times any position occurred in the game (`StyledGame.MaxRepeats`) |
 
 ## How to run
 
