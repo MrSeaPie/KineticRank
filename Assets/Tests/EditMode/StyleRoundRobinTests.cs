@@ -94,6 +94,13 @@ namespace KineticRank.Tests.EditMode
             RunAndWrite(3, StyledSelfPlay.ThreePlyNormalOpenings(), "fairness_round2_depth3.txt");
         }
 
+        // Same opening set as the depth-2 run, so depth 2 vs depth 3 can be compared without the opening set changing
+        [Test, Explicit("Long fairness run"), Category("FairnessLong"), Timeout(86400000)]
+        public void RoundRobin_Depth3_TwoPlyOpenings()
+        {
+            RunAndWrite(3, StyledSelfPlay.TwoPlyOpenings(), "fairness_round2_depth3_twoply.txt");
+        }
+
         static void RunAndWrite(int depth, List<IReadOnlyList<Move>> openings, string fileName)
         {
             var report = StyleRoundRobin.Run(BotStyle.All, openings, depth, 1000, 160, true);
