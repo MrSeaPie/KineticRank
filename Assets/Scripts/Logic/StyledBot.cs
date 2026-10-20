@@ -10,11 +10,15 @@ namespace KineticRank.Logic
     {
         const int Infinity = Bot.WinScore * 2;
         const int CentreColumn = 3;
+        const int Columns = 7;
         const int Rows = 6;
 
         static readonly int[] ColumnOrder = { 3, 2, 4, 1, 5, 0, 6 };
         static readonly MoveKind[] KindOrder = { MoveKind.Normal, MoveKind.Queen, MoveKind.Cleaner };
         static readonly Move[] Order = BuildOrder();
+
+        // Window directions for ThreatPoints: horizontal, vertical, and both diagonals
+        static readonly int[,] Directions = { { 1, 0 }, { 0, 1 }, { 1, 1 }, { 1, -1 } };
 
         static Move[] BuildOrder()
         {
@@ -97,7 +101,7 @@ namespace KineticRank.Logic
             }
         }
 
-        // Bot.Evaluate plus the style's centre and power-up terms, for the side to move.
+        // Bot.Evaluate plus the style's centre, power-up and threat terms, for the side to move.
         public static int Evaluate(GameState state, BotStyle style)
         {
             int score = Bot.Evaluate(state);
@@ -123,7 +127,58 @@ namespace KineticRank.Logic
                 score += sign * (red - blue) * style.HoardWeight;
             }
 
+            if (style.ThreatWeight != 0)
+            {
+                score += sign * ThreatPoints(state) * style.ThreatWeight;
+            }
+
             return score;
+        }
+
+        // Red's open threats minus Blue's, over every four-cell window on the board.
+        // A window counts only when the other side has no token in it: 2 own tokens score 1, 3 score 4.
+        public static int ThreatPoints(GameState state)
+        {
+            if (state == null) throw new ArgumentNullException(nameof(state));
+
+            int points = 0;
+            for (int d = 0; d < Directions.GetLength(0); d++)
+            {
+                int dc = Directions[d, 0];
+                int dr = Directions[d, 1];
+                for (int column = 0; column < Columns; column++)
+                {
+                    for (int row = 0; row < Rows; row++)
+                    {
+                        int endColumn = column + 3 * dc;
+                        int endRow = row + 3 * dr;
+                        if (endColumn < 0 || endColumn >= Columns || endRow < 0 || endRow >= Rows) continue;
+
+                        int red = 0;
+                        int blue = 0;
+                        for (int k = 0; k < 4; k++)
+                        {
+                            int owner = state.Cell(column + k * dc, row + k * dr);
+                            if (owner == (int)CellOwner.Red) red++;
+                            else if (owner == (int)CellOwner.Blue) blue++;
+                        }
+
+                        if (blue == 0) points += WindowPoints(red);
+                        else if (red == 0) points -= WindowPoints(blue);
+                    }
+                }
+            }
+            return points;
+        }
+
+        static int WindowPoints(int own)
+        {
+            switch (own)
+            {
+                case 2: return 1;
+                case 3: return 4;
+                default: return 0;
+            }
         }
     }
 }
