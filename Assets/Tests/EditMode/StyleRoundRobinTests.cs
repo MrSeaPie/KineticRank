@@ -13,6 +13,34 @@ namespace KineticRank.Tests.EditMode
 
         static List<IReadOnlyList<Move>> FewOpenings() => StyledSelfPlay.TwoPlyOpenings().Take(3).ToList();
 
+        // The 49 Normal two-move openings from round 1, kept small so depth 4 stays affordable
+        static List<IReadOnlyList<Move>> TwoPlyNormalOpenings()
+        {
+            var openings = new List<IReadOnlyList<Move>>();
+            var start = GameState.Initial();
+            for (int a = 0; a < GameState.Columns; a++)
+            {
+                var first = new Move(a, MoveKind.Normal);
+                var afterFirst = start.Apply(first);
+                if (afterFirst.IsOver) continue;
+                for (int b = 0; b < GameState.Columns; b++)
+                {
+                    var second = new Move(b, MoveKind.Normal);
+                    if (afterFirst.Apply(second).IsOver) continue;
+                    openings.Add(new[] { first, second });
+                }
+            }
+            return openings;
+        }
+
+        [Test]
+        public void TwoPlyNormalOpenings_HasAll49()
+        {
+            var openings = TwoPlyNormalOpenings();
+            Assert.AreEqual(GameState.Columns * GameState.Columns, openings.Count);
+            Assert.IsTrue(openings.All(o => o.Count == 2));
+        }
+
         [Test]
         public void Run_PlaysEveryPairingInBothColours()
         {
@@ -99,6 +127,13 @@ namespace KineticRank.Tests.EditMode
         public void RoundRobin_Depth3_TwoPlyOpenings()
         {
             RunAndWrite(3, StyledSelfPlay.TwoPlyOpenings(), "fairness_round2_depth3_twoply.txt");
+        }
+
+        // Brief item 4 (4v4): the 49 Normal two-move openings keep the run bounded (1225 games)
+        [Test, Explicit("Long fairness run"), Category("FairnessLong"), Timeout(86400000)]
+        public void RoundRobin_Depth4_TwoPlyNormalOpenings()
+        {
+            RunAndWrite(4, TwoPlyNormalOpenings(), "fairness_round2_depth4.txt");
         }
 
         static void RunAndWrite(int depth, List<IReadOnlyList<Move>> openings, string fileName)
