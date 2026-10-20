@@ -136,6 +136,19 @@ namespace KineticRank.Tests.EditMode
             RunAndWrite(4, TwoPlyNormalOpenings(), "fairness_round2_depth4.txt");
         }
 
+        // Same 49 openings as the depth-4 run, so depth 2/3/4 compare directly without opening-forced power-ups
+        [Test, Explicit("Long fairness run"), Category("FairnessLong"), Timeout(86400000)]
+        public void RoundRobin_Depth2_TwoPlyNormalOpenings()
+        {
+            RunAndWrite(2, TwoPlyNormalOpenings(), "fairness_round2_depth2_normal49.txt");
+        }
+
+        [Test, Explicit("Long fairness run"), Category("FairnessLong"), Timeout(86400000)]
+        public void RoundRobin_Depth3_TwoPlyNormalOpenings()
+        {
+            RunAndWrite(3, TwoPlyNormalOpenings(), "fairness_round2_depth3_normal49.txt");
+        }
+
         static void RunAndWrite(int depth, List<IReadOnlyList<Move>> openings, string fileName)
         {
             var report = StyleRoundRobin.Run(BotStyle.All, openings, depth, 1000, 160, true);
