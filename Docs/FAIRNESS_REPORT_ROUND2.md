@@ -155,7 +155,28 @@ From `PowerUpSummary` over the per-game CSV of the same 11025 games (`FairnessCs
 
 ### Depth 3, three-ply Normal openings (run 2026-10-20)
 
-`RoundRobin_Depth3_ThreePlyNormalOpenings`: `TestResults/fairness_round2_depth3.xml` shows `result="Passed"` (total 1, passed 1, 167.5 s). 343 openings, seedBase 1000, ply cap 160, 8575 games. The figures below come from the test output (`fairness_round2_depth3.txt`). The per-pairing table is not copied here yet.
+`RoundRobin_Depth3_ThreePlyNormalOpenings`: `TestResults/fairness_round2_depth3.xml` shows `result="Passed"` (total 1, passed 1, 167.5 s). 343 openings, seedBase 1000, ply cap 160, 8575 games. The table is copied unchanged from the test output (`TestResults/fairness_round2_depth3.txt`); the figures after it are arithmetic on the table.
+
+Style round-robin: depth 3, 343 openings, seedBase 1000, ply cap 160
+
+| A | B | Games | A wins | B wins | Draws (capped) | First-mover wins | Second-mover wins | Repetition games |
+|---|---|---|---|---|---|---|---|---|
+| Default | Default | 343 | 200 | 140 | 3 (0) | 200 (58.3 %) | 140 (40.8 %) | 0 |
+| Default | Positional | 686 | 356 | 322 | 8 (1) | 356 (51.9 %) | 322 (46.9 %) | 1 |
+| Default | Hoarder | 686 | 324 | 360 | 2 (0) | 400 (58.3 %) | 284 (41.4 %) | 0 |
+| Default | Spender | 686 | 457 | 228 | 1 (0) | 439 (64.0 %) | 246 (35.9 %) | 0 |
+| Default | Attacker | 686 | 360 | 322 | 4 (0) | 388 (56.6 %) | 294 (42.9 %) | 0 |
+| Positional | Positional | 343 | 164 | 173 | 6 (0) | 164 (47.8 %) | 173 (50.4 %) | 0 |
+| Positional | Hoarder | 686 | 330 | 354 | 2 (0) | 375 (54.7 %) | 309 (45.0 %) | 0 |
+| Positional | Spender | 686 | 453 | 231 | 2 (0) | 432 (63.0 %) | 252 (36.7 %) | 0 |
+| Positional | Attacker | 686 | 342 | 338 | 6 (1) | 346 (50.4 %) | 334 (48.7 %) | 1 |
+| Hoarder | Hoarder | 343 | 207 | 133 | 3 (1) | 207 (60.3 %) | 133 (38.8 %) | 1 |
+| Hoarder | Spender | 686 | 456 | 229 | 1 (0) | 438 (63.8 %) | 247 (36.0 %) | 0 |
+| Hoarder | Attacker | 686 | 362 | 321 | 3 (0) | 392 (57.1 %) | 291 (42.4 %) | 0 |
+| Spender | Spender | 343 | 252 | 91 | 0 (0) | 252 (73.5 %) | 91 (26.5 %) | 0 |
+| Spender | Attacker | 686 | 247 | 436 | 3 (1) | 428 (62.4 %) | 255 (37.2 %) | 1 |
+| Attacker | Attacker | 343 | 185 | 157 | 1 (0) | 185 (53.9 %) | 157 (45.8 %) | 0 |
+| All | All | 8575 | - | - | 45 (4) | 5002 (58.3 %) | 3528 (41.1 %) | 4 |
 
 - Draws: 45 (0.5 %), of which 4 hit the ply cap.
 - First mover won 5002 games (58.3 % of all games, 58.6 % of decisive games); second mover won 3528.
