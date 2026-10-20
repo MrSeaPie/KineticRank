@@ -50,7 +50,7 @@ public sealed class PlayerRankMenuPresenter : MonoBehaviour
         var rect = labelObject.GetComponent<RectTransform>();
         rect.anchorMin = Vector2.zero;
         rect.anchorMax = Vector2.one;
-        rect.offsetMin = new Vector2(72f, 10f);
+        rect.offsetMin = new Vector2(72f, 30f);
         rect.offsetMax = new Vector2(-12f, -10f);
         var label = labelObject.GetComponent<TextMeshProUGUI>();
         label.raycastTarget = false;
@@ -62,6 +62,46 @@ public sealed class PlayerRankMenuPresenter : MonoBehaviour
         label.enableWordWrapping = true;
         label.alignment = TextAlignmentOptions.MidlineLeft;
         label.text = "PLAYER RANK  •  " + profile.DisplayRank + "\n" + Detail(profile);
+        CreateProgressBar(profile, graphic.color);
+    }
+
+    void CreateProgressBar(PlayerRankProfile profile, Color colour)
+    {
+        var track = new GameObject("RankProgress", typeof(RectTransform), typeof(Image));
+        track.transform.SetParent(transform, false);
+        var rect = track.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0f, 0f);
+        rect.anchorMax = new Vector2(1f, 0f);
+        rect.pivot = new Vector2(0.5f, 0f);
+        rect.offsetMin = new Vector2(72f, 12f);
+        rect.offsetMax = new Vector2(-12f, 22f);
+        var background = track.GetComponent<Image>();
+        background.color = new Color(0.045f, 0.025f, 0.012f, 1f);
+        background.raycastTarget = false;
+
+        float progress;
+        if (profile.IsPlacement)
+            progress = Mathf.Clamp01((5f - profile.placementGamesLeft) / 5f);
+        else if (profile.currentTier == RankTier.Master)
+            progress = 1f;
+        else
+            progress = Mathf.Clamp01((profile.rating - DivisionStart(profile)) / (float)RankBands.DivisionWidth);
+
+        var fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+        fill.transform.SetParent(track.transform, false);
+        var fillRect = fill.GetComponent<RectTransform>();
+        fillRect.anchorMin = Vector2.zero;
+        fillRect.anchorMax = new Vector2(progress, 1f);
+        fillRect.offsetMin = fillRect.offsetMax = Vector2.zero;
+        var fillImage = fill.GetComponent<Image>();
+        fillImage.color = colour;
+        fillImage.raycastTarget = false;
+    }
+
+    static int DivisionStart(PlayerRankProfile profile)
+    {
+        return RankBands.TierMinimums[(int)profile.currentTier] +
+            (3 - profile.currentDivision) * RankBands.DivisionWidth;
     }
 
     static string Detail(PlayerRankProfile profile)
@@ -71,9 +111,7 @@ public sealed class PlayerRankMenuPresenter : MonoBehaviour
                 (profile.placementGamesLeft == 1 ? "game" : "games");
         if (profile.currentTier == RankTier.Master)
             return profile.rating + " rating  •  Highest tier";
-        int start = RankBands.TierMinimums[(int)profile.currentTier] +
-            (3 - profile.currentDivision) * RankBands.DivisionWidth;
-        int next = start + RankBands.DivisionWidth;
+        int next = DivisionStart(profile) + RankBands.DivisionWidth;
         int remaining = Mathf.Max(0, next - profile.rating);
         return profile.rating + " rating  •  " + remaining + " to next division";
     }
