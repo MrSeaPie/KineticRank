@@ -24,6 +24,8 @@ namespace KineticRank.Tests.EditMode
             Assert.AreEqual(BotTier.Pine, SoloLadder.RecommendOpponent(0));
             Assert.AreEqual(BotTier.Pine, SoloLadder.RecommendOpponent(700));
             Assert.AreEqual(BotTier.Ebony, SoloLadder.RecommendOpponent(2000));
+            Assert.AreEqual(BotTier.Pine, SoloLadder.RecommendOpponent(int.MinValue));
+            Assert.AreEqual(BotTier.Ebony, SoloLadder.RecommendOpponent(int.MaxValue));
         }
 
         [Test]

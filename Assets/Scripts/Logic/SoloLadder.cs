@@ -16,14 +16,14 @@ namespace KineticRank.Logic
             }
 
             BotTier bestTier = tiers[0];
-            int bestDistance = Math.Abs(BotTierRatings.RatingFor(bestTier) - playerRating);
+            long bestDistance = Math.Abs((long)BotTierRatings.RatingFor(bestTier) - playerRating);
             int bestRating = BotTierRatings.RatingFor(bestTier);
 
             for (int i = 1; i < tiers.Count; i++)
             {
                 BotTier candidate = tiers[i];
                 int candidateRating = BotTierRatings.RatingFor(candidate);
-                int distance = Math.Abs(candidateRating - playerRating);
+                long distance = Math.Abs((long)candidateRating - playerRating);
 
                 if (distance < bestDistance || (distance == bestDistance && candidateRating > bestRating))
                 {
