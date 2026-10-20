@@ -114,10 +114,13 @@ namespace KineticRank.Tests.EditMode
         {
             Assert.AreEqual("Pine (Beginner)", BotTiers.Title(BotTier.Pine));
             Assert.AreEqual("Ebony (Expert)", BotTiers.Title(BotTier.Ebony));
-            Assert.AreEqual("Looks 1 move ahead", BotTiers.LookAhead(BotTier.Pine));
-            Assert.AreEqual("Looks 4 moves ahead", BotTiers.LookAhead(BotTier.Oak));
+            Assert.AreEqual("Still learning the game", BotTiers.Blurb(BotTier.Pine));
+            Assert.AreEqual("Very hard to beat", BotTiers.Blurb(BotTier.Ebony));
             foreach (BotTier tier in Enum.GetValues(typeof(BotTier)))
+            {
                 Assert.IsNotEmpty(BotTiers.Difficulty(tier));
+                Assert.IsNotEmpty(BotTiers.Blurb(tier));
+            }
             Assert.Throws<ArgumentOutOfRangeException>(() => BotTiers.Difficulty((BotTier)5));
         }
     }

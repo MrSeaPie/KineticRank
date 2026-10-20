@@ -28,10 +28,21 @@ namespace KineticRank.Tests.EditMode
         }
 
         [Test]
-        public void All_StartsWithSeedsInOrder()
+        public void All_StartsWithSeedsThenThePackInOrder()
         {
-            var ids = PuzzleCatalog.Seeds().Select(s => s.Id).ToList();
+            var ids = PuzzleCatalog.Seeds().Select(s => s.Id).Concat(PuzzlePack.All.Select(p => p.Id)).ToList();
             CollectionAssert.AreEqual(ids, PuzzleCatalog.All.Select(e => e.Id).ToList());
+        }
+
+        [Test]
+        public void All_IncludesEveryPackPuzzle()
+        {
+            foreach (var def in PuzzlePack.All)
+            {
+                Assert.IsTrue(PuzzleCatalog.TryGet(def.Id, out var entry), def.Id);
+                Assert.AreEqual(def.Title, entry.Title, def.Id);
+                Assert.AreEqual(def.MovesN, entry.MovesN, def.Id);
+            }
         }
 
         [Test]
@@ -84,7 +95,7 @@ namespace KineticRank.Tests.EditMode
             PuzzleCatalog.ResetToSeeds();
 
             Assert.IsFalse(PuzzleCatalog.TryGet("temp", out _));
-            Assert.AreEqual(PuzzleCatalog.Seeds().Count(), PuzzleCatalog.All.Count);
+            Assert.AreEqual(PuzzleCatalog.BuiltIns().Count(), PuzzleCatalog.All.Count);
         }
     }
 }
