@@ -49,7 +49,7 @@ Extended per-game CSV rows: `Assets/Scripts/Logic/StyledGameCsv.cs`. Tests: `Ass
 
 ## How to run
 
-The long runs are `[Explicit]` and do not run in the normal EditMode pass. From the project root (expected to work via the test filter; not yet verified on this machine):
+The long runs are `[Explicit]` and do not run in the normal EditMode pass. From the project root (verified for depth 2 on 2026-10-20: the result XML shows the test case with `runstate="Explicit"`, `result="Passed"`, about 31 s, and the table below in its output):
 
 ```
 "C:\Program Files\Unity\Hub\Editor\2022.3.62f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testFilter "KineticRank.Tests.EditMode.StyleRoundRobinTests.RoundRobin_Depth2_TwoPlyOpenings" -testResults TestResults/fairness_round2.xml -logFile TestResults/fairness_round2.log
@@ -59,8 +59,58 @@ For depth 3, use `RoundRobin_Depth3_ThreePlyNormalOpenings` instead (much slower
 
 ## Observed results
 
-Not run yet. Running the long tests needs a new allow_command entry (owner approval of the exact command above).
+### Depth 2, two-ply openings (run 2026-10-20)
+
+Copied unchanged from the test output in `TestResults/fairness_round2.xml`.
+
+Style round-robin: depth 2, 441 openings, seedBase 1000, ply cap 160
+
+| A | B | Games | A wins | B wins | Draws (capped) | First-mover wins | Second-mover wins | Repetition games |
+|---|---|---|---|---|---|---|---|---|
+| Default | Default | 441 | 197 | 136 | 108 (5) | 197 (44.7 %) | 136 (30.8 %) | 7 |
+| Default | Positional | 882 | 341 | 343 | 198 (8) | 391 (44.3 %) | 293 (33.2 %) | 8 |
+| Default | Hoarder | 882 | 215 | 454 | 213 (10) | 403 (45.7 %) | 266 (30.2 %) | 12 |
+| Default | Spender | 882 | 525 | 169 | 188 (9) | 362 (41.0 %) | 332 (37.6 %) | 13 |
+| Default | Attacker | 882 | 342 | 321 | 219 (13) | 393 (44.6 %) | 270 (30.6 %) | 15 |
+| Positional | Positional | 441 | 188 | 150 | 103 (2) | 188 (42.6 %) | 150 (34.0 %) | 2 |
+| Positional | Hoarder | 882 | 221 | 460 | 201 (10) | 412 (46.7 %) | 269 (30.5 %) | 11 |
+| Positional | Spender | 882 | 554 | 188 | 140 (12) | 364 (41.3 %) | 378 (42.9 %) | 12 |
+| Positional | Attacker | 882 | 358 | 329 | 195 (11) | 390 (44.2 %) | 297 (33.7 %) | 11 |
+| Hoarder | Hoarder | 441 | 171 | 104 | 166 (6) | 171 (38.8 %) | 104 (23.6 %) | 8 |
+| Hoarder | Spender | 882 | 648 | 89 | 145 (10) | 383 (43.4 %) | 354 (40.1 %) | 12 |
+| Hoarder | Attacker | 882 | 452 | 207 | 223 (16) | 404 (45.8 %) | 255 (28.9 %) | 18 |
+| Spender | Spender | 441 | 154 | 168 | 119 (8) | 154 (34.9 %) | 168 (38.1 %) | 9 |
+| Spender | Attacker | 882 | 167 | 520 | 195 (8) | 353 (40.0 %) | 334 (37.9 %) | 11 |
+| Attacker | Attacker | 441 | 198 | 133 | 110 (4) | 198 (44.9 %) | 133 (30.2 %) | 5 |
+| All | All | 11025 | - | - | 2523 (132) | 4763 (43.2 %) | 3739 (33.9 %) | 154 |
+
+Derived from the table (arithmetic only, cross-style games only, 3528 games per style, score = wins + half of draws):
+
+| Style | Wins | Losses | Draws | Score |
+|---|---|---|---|---|
+| Hoarder | 2014 | 732 | 782 | 68.2 % |
+| Positional | 1476 | 1318 | 734 | 52.2 % |
+| Default | 1423 | 1287 | 818 | 51.9 % |
+| Attacker | 1377 | 1319 | 832 | 50.8 % |
+| Spender | 613 | 2247 | 668 | 26.8 % |
+
+Other figures from the table:
+
+- Decisive games: 8502 of 11025. Red (first mover) won 4763 of them (56.0 %).
+- Draws: 2523 (22.9 %), of which 132 hit the ply cap. 154 games had a position repeated 3 or more times.
+- In 4 of 5 mirror pairings Red won more than Blue. The exception is Spender vs Spender (154 Red, 168 Blue).
+
+### Depth 3, three-ply Normal openings
+
+Not run yet. Needs owner approval of the exact depth-3 command (allow_command).
 
 ## Inferences
 
-None yet. Any conclusion drawn from these tables will be labelled as an inference: bot-vs-bot play at depth 2-3 does not prove anything about perfect play or human play. Only the forced-win probe (separate subtask) can prove a result.
+These are inferences from bot-vs-bot play at depth 2. They do not prove anything about perfect play or human play. Only the forced-win probe (separate subtask) can prove a result. The puzzle checks in `PuzzleVerifier` cover only the 10 `PuzzlePack` scenarios and are not an opening probe.
+
+1. **First-move edge (likely real for these bots, size unknown for humans).** Red won 56 % of decisive games across every style pairing and in 4 of 5 mirrors. This supports Design 3's alternating starts / best-of-2 for ranked play, regardless of whether the edge survives deeper search.
+2. **Power-ups are not a free win.** The style that spends Queen and Cleaner eagerly (Spender) scored worst against every other style, and the style that holds them (Hoarder) scored best. At depth 2, using a power-up early seems to cost more than it gains. This argues against power-ups being a luck-like or dominant mechanic, but it may also mean the bots time them badly; a human may do better.
+3. **Style differences outweigh evaluation tweaks.** Default, Positional and Attacker are within about 1.5 points of each other; only the power-up policy moved the score a lot.
+4. **Few endless games.** Only 132 of 11025 games (1.2 %) reached the 160-ply cap, so the shift rule does not commonly produce endless loops at this depth.
+
+Open questions: whether inferences 1 and 2 hold at depth 3 (pending run), and whether the opening position is a forced win (forced-win probe).
