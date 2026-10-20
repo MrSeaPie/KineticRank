@@ -247,10 +247,29 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
 
             if (_streakLabelObj != null)
             {
+                var playRt = menu.playButton.GetComponent<RectTransform>();
+                float targetWidth = (playRt != null && playRt.sizeDelta.x > 0f) ? playRt.sizeDelta.x : 360f;
+
+                var rt = _streakLabelObj.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.sizeDelta = new Vector2(targetWidth, 28f);
+                }
+
+                var le = _streakLabelObj.GetComponent<LayoutElement>();
+                if (le == null) le = _streakLabelObj.AddComponent<LayoutElement>();
+                le.minWidth = targetWidth;
+                le.preferredWidth = targetWidth;
+                le.minHeight = 28f;
+                le.preferredHeight = 28f;
+                le.flexibleWidth = 1f;
+
                 var labelTmp = _streakLabelObj.GetComponent<TMP_Text>();
                 if (labelTmp != null)
                 {
                     labelTmp.text = _cachedSolvedToday ? $"Streak: {_cachedStreak}d (Solved!)" : $"Streak: {_cachedStreak}d";
+                    labelTmp.enableWordWrapping = false;
+                    labelTmp.alignment = TextAlignmentOptions.Center;
                 }
                 else
                 {
@@ -258,6 +277,8 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
                     if (labelLegacy != null)
                     {
                         labelLegacy.text = _cachedSolvedToday ? $"Streak: {_cachedStreak}d (Solved!)" : $"Streak: {_cachedStreak}d";
+                        labelLegacy.horizontalOverflow = HorizontalWrapMode.Overflow;
+                        labelLegacy.alignment = TextAnchor.MiddleCenter;
                     }
                 }
             }
