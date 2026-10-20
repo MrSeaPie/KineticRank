@@ -28,16 +28,19 @@ namespace KineticRank.Tests.EditMode
         }
 
         [Test]
-        public void All_StartsWithSeedsThenThePackInOrder()
+        public void All_StartsWithSeedsThenThePacksInOrder()
         {
-            var ids = PuzzleCatalog.Seeds().Select(s => s.Id).Concat(PuzzlePack.All.Select(p => p.Id)).ToList();
+            var ids = PuzzleCatalog.Seeds().Select(s => s.Id)
+                .Concat(PuzzlePack.All.Select(p => p.Id))
+                .Concat(PuzzlePack2.All.Select(p => p.Id))
+                .ToList();
             CollectionAssert.AreEqual(ids, PuzzleCatalog.All.Select(e => e.Id).ToList());
         }
 
         [Test]
         public void All_IncludesEveryPackPuzzle()
         {
-            foreach (var def in PuzzlePack.All)
+            foreach (var def in PuzzlePack.All.Concat(PuzzlePack2.All))
             {
                 Assert.IsTrue(PuzzleCatalog.TryGet(def.Id, out var entry), def.Id);
                 Assert.AreEqual(def.Title, entry.Title, def.Id);
