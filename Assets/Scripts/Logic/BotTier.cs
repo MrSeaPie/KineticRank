@@ -38,8 +38,8 @@ namespace KineticRank.Logic
         static int Index(BotTier tier)
         {
             int i = (int)tier;
-            if (i < 0) return 0;
-            if (i >= Depths.Length) return Depths.Length - 1;
+            if (i < 0 || i >= Depths.Length)
+                throw new System.ArgumentOutOfRangeException(nameof(tier), tier, null);
             return i;
         }
     }
