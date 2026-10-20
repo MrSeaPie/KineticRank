@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using KineticRank.Logic;
@@ -23,40 +22,28 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
     {
         try
         {
-            var type = typeof(DailyStreak);
-            var prop = type.GetProperty("CurrentStreak") ?? type.GetProperty("Streak");
-            if (prop != null) return (int)prop.GetValue(null);
-            var method = type.GetMethod("GetCurrentStreak") ?? type.GetMethod("GetStreak");
-            if (method != null) return (int)method.Invoke(null, null);
+            var now = DateTime.UtcNow;
+            return DailyStreak.CurrentAsOf(DailyStreak.Load(), DailyStreak.DayNumber(now));
         }
         catch (Exception ex)
         {
             Debug.LogWarning("[DailyPuzzle] Failed to get streak: " + ex.Message);
+            return 0;
         }
-        return 0;
     }
 
     public static bool IsSolvedToday()
     {
         try
         {
-            var type = typeof(DailyStreak);
-            var prop = type.GetProperty("HasSolvedToday") ?? type.GetProperty("SolvedToday");
-            if (prop != null) return (bool)prop.GetValue(null);
-            var method = type.GetMethod("HasSolvedToday") ?? type.GetMethod("IsSolvedToday");
-            if (method != null)
-            {
-                var parameters = method.GetParameters();
-                if (parameters.Length == 0) return (bool)method.Invoke(null, null);
-                if (parameters.Length == 1 && parameters[0].ParameterType == typeof(DateTime))
-                    return (bool)method.Invoke(null, new object[] { DateTime.UtcNow });
-            }
+            var now = DateTime.UtcNow;
+            return DailyStreak.Load().LastSolvedDay == DailyStreak.DayNumber(now);
         }
         catch (Exception ex)
         {
             Debug.LogWarning("[DailyPuzzle] Failed to check solved status: " + ex.Message);
+            return false;
         }
-        return false;
     }
 
     public static void RecordDailySolve()
@@ -65,20 +52,7 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
         _solvedRecordedThisMatch = true;
         try
         {
-            var type = typeof(DailyStreak);
-            var method = type.GetMethod("RecordSolve");
-            if (method != null)
-            {
-                var parameters = method.GetParameters();
-                if (parameters.Length == 0)
-                    method.Invoke(null, null);
-                else if (parameters.Length == 1 && parameters[0].IsOptional)
-                    method.Invoke(null, new object[] { Type.Missing });
-                else if (parameters.Length == 1 && parameters[0].ParameterType == typeof(DateTime))
-                    method.Invoke(null, new object[] { DateTime.UtcNow });
-                else
-                    method.Invoke(null, null);
-            }
+            DailyStreak.RecordSolve(DateTime.UtcNow);
         }
         catch (Exception ex)
         {
@@ -86,73 +60,32 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
         }
     }
 
-    public static object GetTodayPuzzle()
+    public static PuzzleEntry GetTodayPuzzle()
     {
         try
         {
-            var type = typeof(DailyPuzzle);
-            var method = type.GetMethod("Today");
-            if (method != null)
-            {
-                var parameters = method.GetParameters();
-                if (parameters.Length == 0) return method.Invoke(null, null);
-                if (parameters.Length == 1 && parameters[0].IsOptional) return method.Invoke(null, new object[] { Type.Missing });
-            }
-            var forDate = type.GetMethod("ForDate");
-            if (forDate != null)
-            {
-                var parameters = forDate.GetParameters();
-                if (parameters.Length == 1) return forDate.Invoke(null, new object[] { DateTime.UtcNow });
-                if (parameters.Length >= 2 && parameters[1].IsOptional) return forDate.Invoke(null, new object[] { DateTime.UtcNow, Type.Missing });
-            }
+            return DailyPuzzle.Today();
         }
         catch (Exception ex)
         {
             Debug.LogWarning("[DailyPuzzle] Failed to get today's puzzle: " + ex.Message);
+            return null;
         }
-        return null;
     }
 
     public static void LaunchDailyPuzzle()
     {
         if (SceneFader.IsFading) return;
-        var entryObj = GetTodayPuzzle();
-        if (entryObj == null)
+        var entry = GetTodayPuzzle();
+        if (entry == null)
         {
             Debug.LogWarning("[DailyPuzzle] No daily puzzle available for today.");
             return;
         }
 
-        GameState start = null;
-        int movesN = 0;
-        string id = "";
-
-        if (entryObj is PuzzleEntry pe)
-        {
-            start = pe.Start;
-            movesN = pe.MovesN;
-            id = pe.Id;
-        }
-        else
-        {
-            var t = entryObj.GetType();
-            start = t.GetProperty("Start")?.GetValue(entryObj) as GameState
-                    ?? t.GetField("Start")?.GetValue(entryObj) as GameState;
-            var movesProp = t.GetProperty("MovesN") ?? t.GetProperty("Moves");
-            if (movesProp != null) movesN = (int)movesProp.GetValue(entryObj);
-            else
-            {
-                var movesField = t.GetField("MovesN") ?? t.GetField("Moves");
-                if (movesField != null) movesN = (int)movesField.GetValue(entryObj);
-            }
-            var idProp = t.GetProperty("Id") ?? t.GetProperty("ID");
-            if (idProp != null) id = idProp.GetValue(entryObj) as string ?? "";
-            else
-            {
-                var idField = t.GetField("Id") ?? t.GetField("ID");
-                if (idField != null) id = idField.GetValue(entryObj) as string ?? "";
-            }
-        }
+        GameState start = entry.Start;
+        int movesN = entry.MovesN;
+        string id = entry.Id;
 
         if (start == null)
         {
