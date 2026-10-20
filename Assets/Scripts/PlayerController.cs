@@ -40,6 +40,14 @@ public class PlayerController : MonoBehaviour
     // True while the side to move takes mouse/keys (not the Solo bot or the puzzle defender)
     public bool IsHumanTurn => !IsBotTurn && !IsPuzzleDefenderTurn;
 
+    void Awake()
+    {
+        if (!PuzzleSettings.Enabled)
+        {
+            isRedTurn = RematchTracker.CurrentFirstMoverIsRed;
+        }
+    }
+
     // Puzzle/tutorial entry: take side to move and power-up availability from a loaded position (pair with BoardManager.LoadPosition)
     public void LoadTurnState(GameState s)
     {
