@@ -83,10 +83,21 @@ public class PuzzleMatchDriver : MonoBehaviour
         // Solved: the board's own win ends the match and GameManager.FinishMatch records PuzzleProgress
     }
 
-    // Reload the scene; Begin's static state rebuilds the same start position
+    // Reset in place: fresh session, and Update reloads the start position once the board is idle.
+    // Only a finished match needs the scene reload (Begin's static state rebuilds the same start position).
     public void Retry()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        var manager = GameManager.Instance;
+        if (manager != null && manager.IsMatchOver)
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            return;
+        }
+
+        Session?.Restart();
+        AttemptFailed = false;
+        pendingReply = null;
+        loaded = false;
     }
 
     void OnGUI()
