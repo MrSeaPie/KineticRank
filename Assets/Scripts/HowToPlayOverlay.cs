@@ -15,16 +15,19 @@ public class HowToPlayOverlay : MonoBehaviour
     [SerializeField] int canvasSortingOrder = 100;
 
     const string BodyText =
-        "<size=44><b>How to play</b></size>\n\n" +
-        "RED and BLUE take turns on a 7 \u00d7 6 board.\n\n" +
-        "<b>Drop</b>  Left-click a column to drop your selected token.\n" +
-        "<b>Shift</b>  Dropping into a full column removes its bottom token and shifts the rest down.\n" +
-        "<b>Queen (Q)</b>  Flips the colours of the tokens in its column.\n" +
-        "<b>Cleaner (C)</b>  Clears its column.\n" +
-        "<b>Normal (N)</b>  A plain token of your colour.\n\n" +
-        "<b>Win</b>  Four in a row, checked after the move resolves. If both colours have four, the match is a draw.\n\n" +
-        "Enter: rematch     H: rating HUD     F1 or ?: this help\n\n" +
-        "<i>Click anywhere or press F1 to close.</i>";
+        "<size=46><b>How to play</b></size>\n\n" +
+        "<b>Goal:</b>  get four of your colour in a row, across, up and down, or diagonally.\n" +
+        "<b>Your turn:</b>  pick a token, then click a column. It falls to the lowest empty square. RED goes first.\n\n" +
+        "<size=34><b>Your three tokens</b></size>   <i>click one in your panel, or press its key</i>\n" +
+        "<b>N   Normal</b>  \u2013  a plain token of your colour. Use it as often as you like.\n" +
+        "<b>Q   Queen</b>  \u2013  once per match. It lands as your colour, then every other token in that column switches colour.\n" +
+        "<b>C   Cleaner</b>  \u2013  once per match. It empties the whole column, and the Cleaner disappears too.\n" +
+        "Your selected token has a gold outline in your panel and floats above the column you point at. " +
+        "After a Queen or Cleaner you are back on Normal.\n\n" +
+        "<b>Full column?</b>  You can still play there. The bottom token drops out, the rest slide down, and yours lands on top.\n" +
+        "<b>Draw:</b>  if one move gives both colours four in a row, nobody wins.\n\n" +
+        "Enter: rematch      H: ratings      F1 or ?: this help\n" +
+        "<i>Click anywhere to close.</i>";
 
     GameObject panel;
     PlayerController lockedPlayer;
@@ -138,10 +141,11 @@ public class HowToPlayOverlay : MonoBehaviour
         box.transform.SetParent(panel.transform, false);
         var boxRect = box.GetComponent<RectTransform>();
         boxRect.anchorMin = boxRect.anchorMax = new Vector2(0.5f, 0.5f);
-        boxRect.sizeDelta = new Vector2(1100f, 760f);
+        boxRect.sizeDelta = new Vector2(1240f, 900f);
         box.GetComponent<Image>().color = new Color(0.22f, 0.14f, 0.08f, 0.96f);
 
-        var body = MakeText(box.transform, "Text", font, BodyText, 30, TextAnchor.UpperLeft);
+        var body = MakeText(box.transform, "Text", font, BodyText, 29, TextAnchor.UpperLeft);
+        body.lineSpacing = 1.1f;
         Stretch(body.rectTransform, 48f);
 
         panel.SetActive(false);

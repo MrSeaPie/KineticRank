@@ -108,5 +108,17 @@ namespace KineticRank.Tests.EditMode
             watch.Stop();
             Assert.Less(watch.ElapsedMilliseconds, 15000, "depth 4 search too slow for WebGL");
         }
+
+        [Test]
+        public void BotTiers_LabelsAreExplicit()
+        {
+            Assert.AreEqual("Pine (Beginner)", BotTiers.Title(BotTier.Pine));
+            Assert.AreEqual("Ebony (Expert)", BotTiers.Title(BotTier.Ebony));
+            Assert.AreEqual("Looks 1 move ahead", BotTiers.LookAhead(BotTier.Pine));
+            Assert.AreEqual("Looks 4 moves ahead", BotTiers.LookAhead(BotTier.Oak));
+            foreach (BotTier tier in Enum.GetValues(typeof(BotTier)))
+                Assert.IsNotEmpty(BotTiers.Difficulty(tier));
+            Assert.Throws<ArgumentOutOfRangeException>(() => BotTiers.Difficulty((BotTier)5));
+        }
     }
 }
