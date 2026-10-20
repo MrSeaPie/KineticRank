@@ -25,6 +25,7 @@ namespace KineticRank.Logic
         };
 
         public static int SearchDepth(BotTier tier) => Depths[Index(tier)];
+        public static int Depth(BotTier tier) => SearchDepth(tier);
         public static string Blurb(BotTier tier) => Blurbs[Index(tier)];
 
         static int Index(BotTier tier)
