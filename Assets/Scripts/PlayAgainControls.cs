@@ -1,6 +1,7 @@
 // File: Assets/Scripts/PlayAgainControls.cs
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using KineticRank.Logic;
 
 public class PlayAgainControls : MonoBehaviour
 {
@@ -26,6 +27,7 @@ public class PlayAgainControls : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
         {
             reloading = true;
+            RematchTracker.RegisterRematch();
 
             // Reload the currently active scene through the fader; ELO persists via SaveManager.
             var active = SceneManager.GetActiveScene();

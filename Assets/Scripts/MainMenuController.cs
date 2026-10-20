@@ -38,6 +38,7 @@ public class MainMenuController : MonoBehaviour
         if (resetButton) resetButton.onClick.AddListener(ResetRanked);
         if (quitButton)  quitButton.onClick.AddListener(QuitGame);
 
+        RematchTracker.Reset();
         RefreshSummary();
     }
 
@@ -82,6 +83,7 @@ public class MainMenuController : MonoBehaviour
         // Hot-seat ranked match: a previous solo or puzzle choice must not carry over
         SoloSettings.Clear();
         ClearPuzzle();
+        RematchTracker.Reset();
         LoadMatch();
     }
 
@@ -92,6 +94,7 @@ public class MainMenuController : MonoBehaviour
 
         ClearPuzzle();
         SoloSettings.StartSolo(tier);
+        RematchTracker.Reset();
         if (!LoadMatch()) SoloSettings.Clear();
     }
 
