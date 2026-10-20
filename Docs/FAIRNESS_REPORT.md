@@ -32,3 +32,7 @@ Task: tsk_0mveb7hcr30809184. Harness: `Assets/Scripts/Logic/SelfPlay.cs` (Kineti
 3. Swap rule: after the first move, the second player may take over that position. Strongest balancing, but adds a decision new players must learn.
 
 Recommendation: alternating starts (option 1) now, then re-measure with deeper pairings before considering a swap rule.
+
+## Round 2 (bot styles, larger runs)
+
+See `Docs/FAIRNESS_REPORT_ROUND2.md` (task tsk_0mvg54t6u22af8c59). In short: across 5 bot styles, Red won 56.0 % of decisive games at depth 2 (11025 games) and 58.6 % at depth 3 (8575 games). The first-move edge did not shrink with deeper search, which still supports option 1 or 2 above.

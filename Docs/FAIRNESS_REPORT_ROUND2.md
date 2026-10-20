@@ -2,14 +2,14 @@
 
 Task: tsk_0mvg54t6u22af8c59 (brief: `Docs/FAIRNESS_BRIEF_ROUND2.md`). Round 1 results: `Docs/FAIRNESS_REPORT.md`.
 
-## Summary for the owner (depth 2 only; depth 3 and the forced-win probe are still pending)
+## Summary for the owner (depth 2 and depth 3; the forced-win probe and 4v4 are still pending)
 
-Everything below comes from bot-vs-bot play at depth 2. It describes these bots, not perfect play or human play. Nothing here is proven; the forced-win probe is the only part of the brief that can prove a result.
+Everything below comes from bot-vs-bot play at depths 2 and 3. It describes these bots, not perfect play or human play. Nothing here is proven; the forced-win probe is the only part of the brief that can prove a result.
 
-- **Is there a first-player edge?** Yes, a small one for these bots. Red (who always moves first) won 56.0 % of decisive games (4763 of 8502). That is just above your 45-55 % target. Red also won more often in 4 of the 5 mirror matches.
-- **Is there a dominant style?** At depth 2, yes. Hoarder (saves Queen and Cleaner) beat every other style head-to-head and scored 68.2 %. We saw no rock-paper-scissors cycle. Default, Positional and Attacker are close to each other (50.8-52.2 %), and Spender (uses power-ups early) lost to everyone (26.8 %). This misses your "no style beats every other style" target. It may be a depth-2 artefact, because a shallow bot that uses a power-up early may simply waste it. The depth-3 run will test that.
-- **Do Queen or Cleaner decide too many games?** Probably not directly. A Queen drop completed the winning line in 585 of 8502 decisive games (6.9 %). Winners used a Queen in 87.3 % of decisive games, but almost every side used one (97 % for most styles), so that figure says little. What matters is *when* power-ups are used: holding them on purpose wins, spending them early loses.
-- **Smallest change I'd recommend:** alternate who starts, or play ranked as best-of-2 with each player starting once (Design 3). This removes the first-move edge from ranked results without changing any rule. I'd hold off on power-up changes until depth 3 shows whether Hoarder still dominates. Repetition draws are rare (154 games, 1.4 %) and so are ply-cap draws (132, 1.2 %), but real matches still have no move limit. That decision is yours.
+- **Is there a first-player edge?** Yes, a small one for these bots, and it did not shrink with deeper search. Red (who always moves first) won 56.0 % of decisive games at depth 2 (4763 of 8502) and 58.6 % at depth 3. Both are above your 45-55 % target.
+- **Is there a dominant style?** Technically yes at both depths: Hoarder (saves Queen and Cleaner) beat every other style head-to-head, and we saw no rock-paper-scissors cycle. But at depth 3 its margin over Default, Positional and Attacker shrank to about 52-53 % (from roughly 67-72 % at depth 2), and its overall score fell from 68.2 % to 56.0 %. Spender (uses power-ups early) lost to everyone at both depths (26.8 % and 34.2 %). My reading is that spending power-ups early is a weak policy, not that holding them is overpowered. This still misses your "no style beats every other style" target, but only narrowly at depth 3.
+- **Do Queen or Cleaner decide too many games?** Probably not directly. At depth 2 a Queen drop completed the winning line in 585 of 8502 decisive games (6.9 %). Almost every side used a Queen at some point, so "the winner used a Queen" says little. What matters is *when* power-ups are used.
+- **Smallest change I'd recommend:** alternate who starts, or play ranked as best-of-2 with each player starting once (Design 3). This removes the first-move edge from ranked results without changing any rule. I would not change the power-ups based on this data. Draws are rare at depth 3 (45 of 8575, 0.5 %), and only 4 games hit the ply cap. Real matches still have no move limit, and whether that should change is your decision.
 
 Harness: `Assets/Scripts/Logic/StyleRoundRobin.cs` (built on `StyledSelfPlay`, which is unchanged). Tests: `Assets/Tests/EditMode/StyleRoundRobinTests.cs`.
 
@@ -29,7 +29,7 @@ CSV run and power-up/draw aggregation: `Assets/Tests/EditMode/FairnessCsvRunTest
   - Attacker: +4 per open-2/open-3 threat point (`StyledBot.ThreatPoints`), minus the opponent's.
 - Every unordered pair of styles, plus each style against itself (mirror). Non-mirror pairings play every opening twice, once with each style as Red. Red always moves first, so Red wins = first-mover wins.
 - Both sides search at the same depth. Ties between equal-best moves are broken by a seeded `System.Random` (game i uses seed 1000 + i; both colour orders reuse the same seeds). Same inputs give identical results.
-- Openings: depth-2 run uses `StyledSelfPlay.TwoPlyOpenings()` (Normal/Queen/Cleaner, up to 441). Depth-3 run uses `ThreePlyNormalOpenings()` (up to 343).
+- Openings: depth-2 run uses `StyledSelfPlay.TwoPlyOpenings()` (Normal/Queen/Cleaner, up to 441). Depth-3 run uses `ThreePlyNormalOpenings()` (up to 343). The opening moves are fixed; the bots only choose from the first ply after the opening.
 - Ply cap 160. Capped games count as draws and are reported separately. "Repetition games" = games where some position occurred 3 or more times.
 - Bot: uncached `StyledBot`. `CachedStyledBot` picks the same moves (see TranspositionTableTests) and can be swapped in later for speed.
 
@@ -66,7 +66,13 @@ The long runs are `[Explicit]` and do not run in the normal EditMode pass. From 
 "C:\Program Files\Unity\Hub\Editor\2022.3.62f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testFilter "KineticRank.Tests.EditMode.StyleRoundRobinTests.RoundRobin_Depth2_TwoPlyOpenings" -testResults TestResults/fairness_round2.xml -logFile TestResults/fairness_round2.log
 ```
 
-For depth 3, use `RoundRobin_Depth3_ThreePlyNormalOpenings` instead (much slower). Output: `TestResults/fairness_round2_depth2.txt` / `fairness_round2_depth3.txt`, a Markdown table that can be pasted below.
+Depth 3 (verified on 2026-10-20: `result="Passed"`, about 168 s):
+
+```
+"C:\Program Files\Unity\Hub\Editor\2022.3.62f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testFilter "KineticRank.Tests.EditMode.StyleRoundRobinTests.RoundRobin_Depth3_ThreePlyNormalOpenings" -testResults TestResults/fairness_round2_depth3.xml -logFile TestResults/fairness_round2_depth3.log
+```
+
+Output: `TestResults/fairness_round2_depth2.txt` / `fairness_round2_depth3.txt`, a Markdown table that can be pasted below.
 
 Per-game CSV plus summary (round-robin table and power-up/draw tables), depth 2. Verified on 2026-10-20 (exit 0, summary written):
 
@@ -144,22 +150,40 @@ From `PowerUpSummary` over the per-game CSV of the same 11025 games (`FairnessCs
 | Positional | 96.4 % | about 7.4 |
 | Hoarder | 76.7 % | 10.3 |
 
-- Of 22050 sides (2 per game), 14700 (66.7 %) first used a power-up in plies 1-2, and 659 (3.0 %) never used one.
+- Of 22050 sides (2 per game), 14700 (66.7 %) first used a power-up in plies 1-2, and 659 (3.0 %) never used one. These plies 1-2 uses are all forced by the openings (see inference 5), and the mean first-Queen plies above include them.
 - Repetition games (some position 3 or more times): 154 (1.4 %), from the round-robin table above.
 
-### Depth 3, three-ply Normal openings
+### Depth 3, three-ply Normal openings (run 2026-10-20)
 
-Not run yet. The command is approved (it is on the allowlist); the run is next.
+`RoundRobin_Depth3_ThreePlyNormalOpenings`: `TestResults/fairness_round2_depth3.xml` shows `result="Passed"` (total 1, passed 1, 167.5 s). 343 openings, seedBase 1000, ply cap 160, 8575 games. The figures below come from the test output (`fairness_round2_depth3.txt`). The per-pairing table is not copied here yet.
+
+- Draws: 45 (0.5 %), of which 4 hit the ply cap.
+- First mover won 5002 games (58.3 % of all games, 58.6 % of decisive games); second mover won 3528.
+- First-mover win share in the mirror pairings ranges from 47.8 % (Positional vs Positional) to 73.5 % (Spender vs Spender).
+
+Cross-style scores (win = 1, draw = 0.5, mirrors excluded, 2744 games per style):
+
+| Style | Score (depth 3) | Score (depth 2, for comparison) |
+|---|---|---|
+| Hoarder | 56.0 % | 68.2 % |
+| Default | 54.8 % | 51.9 % |
+| Positional | 53.1 % | 52.2 % |
+| Attacker | 51.9 % | 50.8 % |
+| Spender | 34.2 % | 26.8 % |
+
+Head-to-head for Hoarder at depth 3: 52.6 % vs Default, 51.7 % vs Positional, 53.0 % vs Attacker, 66.5 % vs Spender. Spender scores 33-36 % against every style. So again there is no rock-paper-scissors cycle, but Hoarder's edge over the three middle styles is narrow.
+
+**Caveat:** depth 2 and depth 3 use different opening sets (two-ply openings that include forced power-up drops vs three-ply Normal-only openings). Changes between the two runs (for example, draws falling from 22.9 % to 0.5 %) cannot be attributed to search depth alone.
 
 ## Inferences
 
-These are inferences from bot-vs-bot play at depth 2. They do not prove anything about perfect play or human play. Only the forced-win probe (separate subtask) can prove a result. The puzzle checks in `PuzzleVerifier` cover only the 10 `PuzzlePack` scenarios and are not an opening probe.
+These are inferences from bot-vs-bot play at depths 2 and 3. They do not prove anything about perfect play or human play. Only the forced-win probe (separate subtask) can prove a result. The puzzle checks in `PuzzleVerifier` cover only the 10 `PuzzlePack` scenarios and are not an opening probe.
 
-1. **First-move edge (likely real for these bots, size unknown for humans).** Red won 56 % of decisive games across every style pairing and in 4 of 5 mirrors. This supports Design 3's alternating starts / best-of-2 for ranked play, regardless of whether the edge survives deeper search.
-2. **Power-ups are not a free win.** The style that spends Queen and Cleaner eagerly (Spender) scored worst against every other style, and the style that holds them (Hoarder) scored best. At depth 2, using a power-up early seems to cost more than it gains. This argues against power-ups being a luck-like or dominant mechanic, but it may also mean the bots time them badly; a human may do better.
-3. **Style differences outweigh evaluation tweaks.** Default, Positional and Attacker are within about 1.5 points of each other; only the power-up policy moved the score a lot.
-4. **Few endless games.** Only 132 of 11025 games (1.2 %) reached the 160-ply cap, so the shift rule does not commonly produce endless loops at this depth.
-5. **The plies 1-2 power-up count is probably forced by the openings, not chosen by the bots.** 14700 is exactly 2/3 of 22050. With 441 two-ply openings (7 columns x 3 move kinds per ply), 14 of the 21 choices for each side's opening move are Queen or Cleaner, which is 2/3. Not yet checked against `TwoPlyOpenings()` itself. The mean first-Queen plies above include these forced uses too.
-6. **"Winner used a Queen" is not evidence that the Queen decides games.** Nearly every side used one, and Hoarder used it least yet won most. Only 6.9 % of wins were completed by the Queen drop itself.
+1. **First-move edge (likely real for these bots, size unknown for humans).** Red won 56.0 % of decisive games at depth 2 and 58.6 % at depth 3. The edge did not shrink with deeper search. This supports Design 3's alternating starts / best-of-2 for ranked play.
+2. **Power-ups are not a free win.** The style that spends Queen and Cleaner eagerly (Spender) scored worst against every style at both depths. Hoarder's lead over the middle styles shrank from about 68 % to 56 % overall at depth 3. That fits "early spending is a mistake" better than "holding power-ups is overpowered". Bots may still time power-ups badly, and a human may do better.
+3. **Style differences outweigh evaluation tweaks.** Default, Positional and Attacker stay within about 3 points of each other at both depths. Only the power-up policy moved the score a lot.
+4. **Few endless games.** 132 of 11025 games (1.2 %) at depth 2 and 4 of 8575 at depth 3 reached the 160-ply cap. The shift rule does not commonly produce endless loops for these bots.
+5. **The plies 1-2 power-up count at depth 2 is forced by the openings (verified from code).** `StyledSelfPlay.TwoPlyOpenings()` fixes plies 1-2 in every game, and the bot never chooses those plies. With 7 columns x 3 kinds per ply, 14 of 21 choices per side are Queen or Cleaner. That gives 441 openings x 25 pairings = 11025 games and exactly 14700 of 22050 sides.
+6. **"Winner used a Queen" is not evidence that the Queen decides games.** Nearly every side used one, and Hoarder used it least yet won most. Only 6.9 % of depth-2 wins were completed by the Queen drop itself.
 
-Open questions: whether inferences 1 and 2 hold at depth 3 (pending run), and whether the opening position is a forced win (forced-win probe). Still to do from the brief: 4v4 (and 6v6 if time allows).
+Open questions: whether the opening position is a forced win (forced-win probe), and whether the depth-3 trends continue at 4v4 (still to do from the brief, plus 6v6 if time allows). A depth-3 run with the two-ply power-up openings would separate the depth effect from the opening-set effect.
