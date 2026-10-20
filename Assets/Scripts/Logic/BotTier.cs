@@ -2,6 +2,7 @@ using System;
 
 namespace KineticRank.Logic
 {
+    // Solo opponent tiers, weakest first. Depths are starting values; WebGL timing may lower the top tiers.
     public enum BotTier
     {
         Pine = 0,
@@ -13,50 +14,34 @@ namespace KineticRank.Logic
 
     public static class BotTiers
     {
-        public static readonly string[] Difficulties = 
-        {
-            "Beginner",
-            "Easy",
-            "Medium",
-            "Hard",
-            "Expert"
-        };
-
-        static readonly string[] Blurbs = 
+        static readonly int[] Depths = { 1, 2, 4, 6, 8 };
+        static readonly string[] Difficulties = { "Beginner", "Easy", "Medium", "Hard", "Expert" };
+        // How each tier plays, in player terms (search depths 1 / 2 / 4 / 6 / 8 behind the scenes)
+        static readonly string[] Blurbs =
         {
             "Still learning the game",
-            "Plays mostly by instinct",
+            "Blocks your obvious threats",
             "Thinks a few moves ahead",
-            "Plans attacks and counters",
+            "Sets traps and spots yours",
             "Very hard to beat"
         };
 
-        static readonly int[] Depths = { 1, 2, 4, 6, 8 };
+        public static int Depth(BotTier tier) => Depths[Index(tier)];
 
-        public static string Difficulty(BotTier tier)
-        {
-            int idx = (int)tier;
-            if (idx < 0 || idx >= Difficulties.Length)
-                throw new ArgumentOutOfRangeException(nameof(tier), tier, null);
-            return Difficulties[idx];
-        }
+        // Plain-word difficulty shown next to the wood name, e.g. "Medium" for Oak
+        public static string Difficulty(BotTier tier) => Difficulties[Index(tier)];
 
-        public static string Blurb(BotTier tier)
-        {
-            int idx = (int)tier;
-            if (idx < 0 || idx >= Blurbs.Length)
-                throw new ArgumentOutOfRangeException(nameof(tier), tier, null);
-            return Blurbs[idx];
-        }
-
+        // "Oak (Medium)"
         public static string Title(BotTier tier) => $"{tier} ({Difficulty(tier)})";
 
-        public static int Depth(BotTier tier)
+        // One line on how the tier plays, e.g. "Thinks a few moves ahead" for Oak
+        public static string Blurb(BotTier tier) => Blurbs[Index(tier)];
+
+        static int Index(BotTier tier)
         {
-            int idx = (int)tier;
-            if (idx < 0 || idx >= Depths.Length)
-                throw new ArgumentOutOfRangeException(nameof(tier), tier, null);
-            return Depths[idx];
+            int i = (int)tier;
+            if (i < 0 || i >= Depths.Length) throw new ArgumentOutOfRangeException(nameof(tier));
+            return i;
         }
     }
 }
