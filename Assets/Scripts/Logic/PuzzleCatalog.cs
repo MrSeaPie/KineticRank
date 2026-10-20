@@ -23,7 +23,7 @@ namespace KineticRank.Logic
     }
 
     // Registry of puzzles shown in the Puzzles menu: the seed positions (proven unique in EditMode tests) followed by
-    // the curated PuzzlePack. More can be added through Register.
+    // the curated PuzzlePack and PuzzlePack2. More can be added through Register.
     public static class PuzzleCatalog
     {
         const int R = (int)CellOwner.Red;
@@ -34,11 +34,13 @@ namespace KineticRank.Logic
 
         static PuzzleCatalog() => Register(BuiltIns());
 
-        // Seeds first, then every PuzzlePack puzzle in pack order
+        // Seeds first, then every PuzzlePack puzzle in pack order, then every PuzzlePack2 puzzle in pack order
         public static IEnumerable<PuzzleEntry> BuiltIns()
         {
             foreach (var seed in Seeds()) yield return seed;
             foreach (var def in PuzzlePack.All)
+                yield return new PuzzleEntry(def.Id, def.Title, def.Hint, def.Start, def.MovesN);
+            foreach (var def in PuzzlePack2.All)
                 yield return new PuzzleEntry(def.Id, def.Title, def.Hint, def.Start, def.MovesN);
         }
 
