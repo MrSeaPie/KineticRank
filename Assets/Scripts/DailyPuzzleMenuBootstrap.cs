@@ -16,6 +16,7 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
 
     private Button _dailyButton;
     private GameObject _streakLabelObj;
+    private MainMenuController _cachedMenu;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Initialize()
@@ -48,6 +49,7 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
     {
         _dailyButton = null;
         _streakLabelObj = null;
+        _cachedMenu = (scene.name == "MainMenu") ? FindObjectOfType<MainMenuController>() : null;
         RefreshCachedStatus();
     }
 
@@ -126,7 +128,7 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
         IsDailyPuzzleActive = true;
         _solvedRecordedThisMatch = false;
 
-        var menu = UnityEngine.Object.FindObjectOfType<MainMenuController>();
+        var menu = (Instance != null && Instance._cachedMenu != null) ? Instance._cachedMenu : UnityEngine.Object.FindObjectOfType<MainMenuController>();
         if (menu != null)
         {
             menu.PlayPuzzle(entry);
@@ -151,10 +153,14 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
             IsDailyPuzzleActive = false;
             _solvedRecordedThisMatch = false;
 
+            if (_cachedMenu == null)
+            {
+                _cachedMenu = FindObjectOfType<MainMenuController>();
+            }
+
             EnsureUI();
 
-            var menu = FindObjectOfType<MainMenuController>();
-            if (menu == null || !menu.isActiveAndEnabled) return;
+            if (_cachedMenu == null || !_cachedMenu.isActiveAndEnabled) return;
 
             if (!SceneFader.IsFading && Input.GetKeyDown(KeyCode.D))
             {
@@ -178,7 +184,11 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
 
     void EnsureUI()
     {
-        var menu = FindObjectOfType<MainMenuController>();
+        if (_cachedMenu == null)
+        {
+            _cachedMenu = FindObjectOfType<MainMenuController>();
+        }
+        var menu = _cachedMenu;
         if (menu == null || menu.playButton == null) return;
 
         if (_dailyButton == null)
@@ -197,7 +207,7 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
                     btnObj.transform.SetSiblingIndex(menu.resetButton.transform.GetSiblingIndex());
                 }
                 _dailyButton = btnObj.GetComponent<Button>();
-                _dailyButton.onClick.RemoveAllListeners();
+                _dailyButton.onClick = new Button.ButtonClickedEvent();
                 _dailyButton.onClick.AddListener(OnDailyButtonClicked);
             }
         }
@@ -256,7 +266,7 @@ public class DailyPuzzleMenuBootstrap : MonoBehaviour
 
     static void OnDailyButtonClicked()
     {
-        var menu = FindObjectOfType<MainMenuController>();
+        var menu = (Instance != null && Instance._cachedMenu != null) ? Instance._cachedMenu : FindObjectOfType<MainMenuController>();
         if (menu == null || !menu.isActiveAndEnabled || SceneFader.IsFading) return;
         LaunchDailyPuzzle();
     }
