@@ -46,6 +46,13 @@ public class PlayerController : MonoBehaviour
         {
             isRedTurn = RematchTracker.CurrentFirstMoverIsRed;
         }
+
+        // Traditional mode: neither side has power-ups, so keys, HUD and the Solo bot (via BoardSnapshot) only offer Normal moves
+        if (TraditionalSettings.Enabled && !PuzzleSettings.Enabled)
+        {
+            redQueenUsed = redCleanerUsed = true;
+            blueQueenUsed = blueCleanerUsed = true;
+        }
     }
 
     // Puzzle/tutorial entry: take side to move and power-up availability from a loaded position (pair with BoardManager.LoadPosition)
