@@ -2,7 +2,6 @@ using System;
 
 namespace KineticRank.Logic
 {
-    // Solo opponent tiers, weakest first. Depths are starting values; WebGL timing may lower the top tiers.
     public enum BotTier
     {
         Pine = 0,
@@ -14,25 +13,50 @@ namespace KineticRank.Logic
 
     public static class BotTiers
     {
-        static readonly int[] Depths = { 1, 2, 3, 4, 5 };
+        public static readonly string[] Difficulties = 
+        {
+            "Beginner",
+            "Easy",
+            "Medium",
+            "Hard",
+            "Expert"
+        };
 
-        static readonly string[] Blurbs =
+        static readonly string[] Blurbs = 
         {
             "Still learning the game",
-            "Blocks your obvious threats",
+            "Plays mostly by instinct",
             "Thinks a few moves ahead",
-            "Sets traps and spots yours",
+            "Plans attacks and counters",
             "Very hard to beat"
         };
 
-        public static int Depth(BotTier tier) => Depths[Index(tier)];
-        public static string Blurb(BotTier tier) => Blurbs[Index(tier)];
+        static readonly int[] Depths = { 1, 2, 4, 6, 8 };
 
-        static int Index(BotTier tier)
+        public static string Difficulty(BotTier tier)
         {
-            int i = (int)tier;
-            if (i < 0 || i >= Depths.Length) throw new ArgumentOutOfRangeException(nameof(tier));
-            return i;
+            int idx = (int)tier;
+            if (idx < 0 || idx >= Difficulties.Length)
+                throw new ArgumentOutOfRangeException(nameof(tier), tier, null);
+            return Difficulties[idx];
+        }
+
+        public static string Blurb(BotTier tier)
+        {
+            int idx = (int)tier;
+            if (idx < 0 || idx >= Blurbs.Length)
+                throw new ArgumentOutOfRangeException(nameof(tier), tier, null);
+            return Blurbs[idx];
+        }
+
+        public static string Title(BotTier tier) => $"{tier} ({Difficulty(tier)})";
+
+        public static int Depth(BotTier tier)
+        {
+            int idx = (int)tier;
+            if (idx < 0 || idx >= Depths.Length)
+                throw new ArgumentOutOfRangeException(nameof(tier), tier, null);
+            return Depths[idx];
         }
     }
 }
