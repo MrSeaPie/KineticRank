@@ -6,6 +6,7 @@ using KineticRank.Logic;
 // One panel per player beside the board, showing that player's Normal / Queen / Cleaner tokens.
 // The side to move is bright and its selected token is outlined in gold; the other side is dimmed.
 // Clicking a token selects it through PlayerController.Select, so rules and move admission stay there.
+// Traditional mode shows only the Normal token and a 'TRADITIONAL' note in place of the power-up slots.
 public class PowerUpHud : MonoBehaviour
 {
     // Reference layout (1920 x 1080, scaled like the other HUD canvases); BoardFraming keeps the board clear of it
@@ -49,9 +50,12 @@ public class PowerUpHud : MonoBehaviour
         public RectTransform root;
         public CanvasGroup group;
         public Image border;
-        public Text header, subtitle, status;
+        public Text header, subtitle, status, traditionalNote;
         public readonly Slot[] slots = new Slot[3];
     }
+
+    // Same condition PlayerController.Awake uses to mark every power-up as used
+    static bool TraditionalActive => TraditionalSettings.Enabled && !PuzzleSettings.Enabled;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Register()
@@ -129,6 +133,12 @@ public class PowerUpHud : MonoBehaviour
 
         for (int i = 0; i < Kinds.Length; i++)
             side.slots[i] = BuildSlot(side, i);
+
+        // Traditional mode: fills the space left by the hidden Queen and Cleaner slots
+        side.traditionalNote = MakeText(side.root, "TraditionalNote", 26, FontStyle.Bold, Gold, TextAnchor.UpperCenter);
+        side.traditionalNote.text = "TRADITIONAL\nNormal tokens only,\nno power-ups";
+        Place(side.traditionalNote.rectTransform, 16f, SlotTop + SlotHeight + SlotGap + 40f, PanelWidth - 32f, 120f);
+        side.traditionalNote.enabled = false;
         return side;
     }
 
@@ -250,6 +260,7 @@ public class PowerUpHud : MonoBehaviour
         bool toMove = player.IsRedTurn == side.red;
         bool human = IsHuman(side.red);
         bool canPick = toMove && human && !resolving;
+        bool traditional = TraditionalActive;
 
         side.group.alpha = toMove ? 1f : 0.5f;
         side.border.enabled = toMove;
@@ -257,12 +268,18 @@ public class PowerUpHud : MonoBehaviour
         side.status.text = resolving && toMove ? "Moving..."
                          : toMove ? (human ? "Your turn: pick a token" : "Thinking...")
                          : "Waiting";
+        side.traditionalNote.enabled = traditional;
 
         Sprite sprite = TokenSprite(side.red);
         Color tint = side.red ? RedTint : BlueTint;
         for (int i = 0; i < Kinds.Length; i++)
         {
             var slot = side.slots[i];
+            // Traditional mode offers only the Normal token
+            bool shown = i == 0 || !traditional;
+            if (slot.root.gameObject.activeSelf != shown) slot.root.gameObject.SetActive(shown);
+            if (!shown) continue;
+
             bool available = Kinds[i] == MoveKind.Normal
                 || (Kinds[i] == MoveKind.Queen ? player.QueenAvailable(side.red) : player.CleanerAvailable(side.red));
             bool selected = toMove && player.SelectedKind == Kinds[i];
