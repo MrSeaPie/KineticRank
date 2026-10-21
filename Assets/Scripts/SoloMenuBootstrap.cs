@@ -1,4 +1,3 @@
-// File: Assets/Scripts/SoloMenuBootstrap.cs
 using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -7,14 +6,12 @@ using UnityEngine.UI;
 using TMPro;
 using KineticRank.Logic;
 
-// Adds a Solo button and a tier panel to MainMenu at runtime, so the scene file stays untouched.
-// Buttons are clones of PlayButton; no art is loaded here.
+// Builds wooden Solo entries from the scene's existing Play button.
 public class SoloMenuBootstrap : MonoBehaviour
 {
     const float ButtonGap = 16f;
     const float TierPanelDrop = 70f;
     static readonly Vector2 TierButtonGrow = new Vector2(1.25f, 1.2f);
-
     MainMenuController menu;
     GameObject mainButtons;
     GameObject tierPanel;
@@ -32,11 +29,8 @@ public class SoloMenuBootstrap : MonoBehaviour
     {
         var owner = FindObjectOfType<MainMenuController>();
         if (!owner || !owner.playButton || !owner.playButton.transform.parent) return;
-
-        // A scene-wired panel takes priority over the runtime one
         if (FindObjectOfType<SoloMenuPanel>(true)) return;
         if (owner.GetComponent<SoloMenuBootstrap>()) return;
-
         owner.gameObject.AddComponent<SoloMenuBootstrap>().Build(owner);
     }
 
@@ -47,8 +41,6 @@ public class SoloMenuBootstrap : MonoBehaviour
         var group = play.transform.parent;
         mainButtons = group.gameObject;
         if (menu.rankedSummary) summary = menu.rankedSummary.gameObject;
-
-        // Fallback: without a layout group the cloned buttons would sit on top of each other
         if (!group.GetComponent<LayoutGroup>())
         {
             var layout = mainButtons.AddComponent<VerticalLayoutGroup>();
@@ -60,7 +52,7 @@ public class SoloMenuBootstrap : MonoBehaviour
             layout.childForceExpandHeight = false;
         }
 
-        // Tier panel: a copy of the button group (same layout and position) with its buttons removed
+        // Clone before adding entries so the opponent panel contains no main-menu actions.
         tierPanel = Instantiate(mainButtons, group.parent);
         tierPanel.name = "SoloTierPanel";
         tierPanel.SetActive(false);
@@ -71,16 +63,16 @@ public class SoloMenuBootstrap : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        // Solo button sits right below Play
-        var solo = CloneButton(play, group, "SoloButton", "Solo");
-        solo.transform.SetSiblingIndex(play.transform.GetSiblingIndex() + 1);
+        var ranked = CloneButton(play, group, "RankedSoloButton", "Ranked Solo");
+        ranked.transform.SetSiblingIndex(play.transform.GetSiblingIndex() + 1);
+        ranked.onClick.AddListener(StartRanked);
+        var solo = CloneButton(play, group, "SoloButton", "Casual Solo");
+        solo.transform.SetSiblingIndex(ranked.transform.GetSiblingIndex() + 1);
         solo.onClick.AddListener(OpenTiers);
 
-        // Taller, wider tier buttons with the difficulty spelled out; the panel sits lower so it clears the title
         if (tierPanel.transform is RectTransform panelRect)
             panelRect.anchoredPosition -= new Vector2(0f, TierPanelDrop);
         AddHeading(play, tierPanel.transform, "Choose your opponent");
-
         var tiers = (BotTier[])System.Enum.GetValues(typeof(BotTier));
         var tierButtons = new Button[tiers.Length];
         for (int i = 0; i < tiers.Length; i++)
@@ -90,22 +82,22 @@ public class SoloMenuBootstrap : MonoBehaviour
                 rect.sizeDelta = new Vector2(rect.sizeDelta.x * TierButtonGrow.x, rect.sizeDelta.y * TierButtonGrow.y);
         }
         firstTier = tierButtons[0];
-
         CloneButton(play, tierPanel.transform, "BackButton", "Back").onClick.AddListener(CloseTiers);
-
-        // Panel is still inactive, so SoloMenuPanel.Awake wires the tier buttons on first open
         var panel = tierPanel.AddComponent<SoloMenuPanel>();
         panel.menu = menu;
         panel.tierButtons = tierButtons;
-
         KeepClearOfSummary(group as RectTransform);
     }
 
-    // "Oak · Medium" with "Thinks a few moves ahead" underneath
+    void StartRanked()
+    {
+        if (SceneFader.IsFading || !menu || !menu.enabled) return;
+        menu.PlayRankedSolo(PlayerRankStore.GetProfile().rating);
+    }
+
     static string TierLabel(BotTier tier) =>
         $"<b>{tier}</b>  ·  {BotTiers.Difficulty(tier)}\n<size=60%>{BotTiers.Blurb(tier)}</size>";
 
-    // Plain text line above the tier buttons, in the buttons' font
     static void AddHeading(Button style, Transform parent, string content)
     {
         var go = new GameObject("TierHeading", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -127,20 +119,17 @@ public class SoloMenuBootstrap : MonoBehaviour
     {
         var button = Instantiate(source, parent);
         button.name = name;
-        // Fresh event so no Play listener carries over from the source
         button.onClick = new Button.ButtonClickedEvent();
         var text = button.GetComponentInChildren<TMP_Text>(true);
         if (text) text.text = label;
         return button;
     }
 
-    // The extra Solo button makes the group taller; push RankedSummary down if they would touch
     void KeepClearOfSummary(RectTransform group)
     {
         if (!summary || !group) return;
         var summaryRect = summary.transform as RectTransform;
         if (!summaryRect || !summaryRect.parent) return;
-
         LayoutRebuilder.ForceRebuildLayoutImmediate(group);
         var corners = new Vector3[4];
         float lowest = float.MaxValue;
@@ -152,7 +141,6 @@ public class SoloMenuBootstrap : MonoBehaviour
             lowest = Mathf.Min(lowest, corners[0].y);
         }
         if (lowest == float.MaxValue) return;
-
         float scale = summaryRect.parent.lossyScale.y;
         if (scale <= 0f) return;
         summaryRect.GetWorldCorners(corners);
@@ -169,8 +157,6 @@ public class SoloMenuBootstrap : MonoBehaviour
     void OpenTiers()
     {
         if (SceneFader.IsFading) return;
-
-        // Stop the menu's key handling so Enter can't start a ranked match behind the panel
         menu.enabled = false;
         mainButtons.SetActive(false);
         if (summary) summary.SetActive(false);
@@ -187,7 +173,6 @@ public class SoloMenuBootstrap : MonoBehaviour
         StartCoroutine(EnableMenuNextFrame());
     }
 
-    // One frame later, so the key that closed the panel isn't also read by the menu
     IEnumerator EnableMenuNextFrame()
     {
         yield return null;

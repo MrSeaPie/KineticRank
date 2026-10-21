@@ -1,4 +1,3 @@
-// File: Assets/Scripts/MainMenuController.cs  (FULL FILE REPLACEMENT - with SFX + fade)
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -9,13 +8,10 @@ public class MainMenuController : MonoBehaviour
     [Header("UI")]
     [Tooltip("Label that shows current ranked summary")]
     public TMP_Text rankedSummary;
-
     [Tooltip("Play button")]
     public Button playButton;
-
     [Tooltip("Reset Ranked button")]
     public Button resetButton;
-
     [Tooltip("Quit button (optional)")]
     public Button quitButton;
 
@@ -33,25 +29,19 @@ public class MainMenuController : MonoBehaviour
     void Awake()
     {
         resetConfirm = new ConfirmWindow(resetConfirmSeconds);
-
-        if (playButton)  playButton.onClick.AddListener(Play);
+        if (playButton) playButton.onClick.AddListener(Play);
         if (resetButton) resetButton.onClick.AddListener(ResetRanked);
-        if (quitButton)  quitButton.onClick.AddListener(QuitGame);
-
+        if (quitButton) quitButton.onClick.AddListener(QuitGame);
         RematchTracker.Reset();
         RefreshSummary();
     }
 
     void Update()
     {
-        // Ignore menu keys while a scene load is fading out (no repeated clicks, no reset mid-load)
         if (SceneFader.IsFading) return;
-
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) Play();
         if (Input.GetKeyDown(KeyCode.Backspace)) ResetRanked();
-        if (Input.GetKeyDown(KeyCode.Escape))     QuitGame();
-
-        // Restore the summary once the confirm window lapses without a second press
+        if (Input.GetKeyDown(KeyCode.Escape)) QuitGame();
         if (showingResetPrompt && !resetConfirm.IsArmed(Time.unscaledTime))
         {
             showingResetPrompt = false;
@@ -62,12 +52,10 @@ public class MainMenuController : MonoBehaviour
     void RefreshSummary()
     {
         if (!rankedSummary) return;
-
-        int red  = SaveManager.GetRedElo();
+        int red = SaveManager.GetRedElo();
         int blue = SaveManager.GetBlueElo();
-        int rw   = SaveManager.GetRedWins();
-        int bw   = SaveManager.GetBlueWins();
-
+        int rw = SaveManager.GetRedWins();
+        int bw = SaveManager.GetBlueWins();
         rankedSummary.text = $"RED {red} (W{rw})  |  BLUE {blue} (W{bw})";
     }
 
@@ -79,33 +67,37 @@ public class MainMenuController : MonoBehaviour
     public void Play()
     {
         if (SceneFader.IsFading) return;
-
-        // Hot-seat ranked match: a previous solo or puzzle choice must not carry over
         SoloSettings.Clear();
         ClearPuzzle();
         RematchTracker.Reset();
         LoadMatch();
     }
 
-    // Solo match vs the bot at the chosen tier (called by SoloMenuPanel)
     public void PlaySolo(BotTier tier)
     {
         if (SceneFader.IsFading) return;
-
         ClearPuzzle();
         SoloSettings.StartSolo(tier);
         RematchTracker.Reset();
         if (!LoadMatch()) SoloSettings.Clear();
     }
 
-    // Puzzle from PuzzleCatalog (called by the Puzzles panel); PuzzleMatchDriver takes over in Match
+    // The rank entry supplies the persisted player rating. Opponent selection
+    // remains deterministic and uses the ladder's stronger-bot tie breaker.
+    public void PlayRankedSolo(int playerRating)
+    {
+        if (SceneFader.IsFading) return;
+        ClearPuzzle();
+        SoloSettings.StartRankedSolo(KineticRank.Logic.SoloLadder.RecommendOpponent(playerRating));
+        RematchTracker.Reset();
+        if (!LoadMatch()) SoloSettings.Clear();
+    }
+
     public void PlayPuzzle(PuzzleEntry entry)
     {
         if (SceneFader.IsFading) return;
         if (entry == null || entry.Start == null) return;
-
         SoloSettings.Clear();
-        // The side to move in the start position is the side the player solves for
         bool attackerIsRed = new PuzzleSession(entry.Start, entry.MovesN).AttackerIsRed;
         PuzzleSettings.StartPuzzle(entry.Id, attackerIsRed);
         PuzzleMatchDriver.Begin(entry.Start, entry.MovesN);
@@ -130,11 +122,9 @@ public class MainMenuController : MonoBehaviour
         return true;
     }
 
-    // First press arms the confirm window; a second press within resetConfirmSeconds resets
     public void ResetRanked()
     {
         PlayClick();
-
         if (!resetConfirm.Press(Time.unscaledTime))
         {
             showingResetPrompt = true;
@@ -142,7 +132,6 @@ public class MainMenuController : MonoBehaviour
             else Debug.Log("[MainMenu] Press Backspace again to reset ranked.");
             return;
         }
-
         showingResetPrompt = false;
         SaveManager.ResetRanked();
         RefreshSummary();
