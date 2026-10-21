@@ -152,12 +152,10 @@ namespace KineticRank.Tests.PlayMode
             Assert.IsTrue((bool)wasTimeoutProp.GetValue(gm), "WasTimeout should be true after timeout forfeit");
 
             var winnerProp = gmType.GetProperty("Winner", AnyInstance) ?? gmType.GetProperty("MatchResult", AnyInstance);
-            if (winnerProp != null)
-            {
-                string winnerVal = winnerProp.GetValue(gm)?.ToString() ?? "";
-                Assert.IsTrue(winnerVal.IndexOf("Blue", StringComparison.OrdinalIgnoreCase) >= 0 || winnerVal == "2",
-                    "Expected Blue win on Red timeout forfeit, got: " + winnerVal);
-            }
+            Assert.IsNotNull(winnerProp, "Winner or MatchResult property must exist on GameManager");
+            string winnerVal = winnerProp.GetValue(gm)?.ToString() ?? "";
+            Assert.IsTrue(winnerVal.IndexOf("Blue", StringComparison.OrdinalIgnoreCase) >= 0 || winnerVal == "2",
+                "Expected Blue win on Red timeout forfeit, got: " + winnerVal);
 
             // Verify idempotency / single settlement on subsequent calls
             triggerMethod.Invoke(clock, new object[] { false });
@@ -218,46 +216,27 @@ namespace KineticRank.Tests.PlayMode
 
             var isMatchOverProp = gmType.GetProperty("IsMatchOver", AnyInstance);
             var wasTimeoutProp = gmType.GetProperty("WasTimeout", AnyInstance);
+            Assert.IsNotNull(isMatchOverProp, "GameManager.IsMatchOver property must exist");
+            Assert.IsNotNull(wasTimeoutProp, "GameManager.WasTimeout property must exist");
 
             float deadline = Time.realtimeSinceStartup + 3.0f;
-            while (Time.realtimeSinceStartup < deadline)
+            while (Time.realtimeSinceStartup < deadline && !(bool)isMatchOverProp.GetValue(gm))
             {
-                yield return null;
-                if (isMatchOverProp != null && (bool)isMatchOverProp.GetValue(gm))
-                    break;
-            }
-
-            if (isMatchOverProp != null && !(bool)isMatchOverProp.GetValue(gm))
-            {
-                if (stateObj != null)
-                {
-                    var tick = stateObj.GetType().GetMethod("Tick", new[] { typeof(float) });
-                    if (tick != null) tick.Invoke(stateObj, new object[] { 1f });
-                }
-                var updateMethod = clockType.GetMethod("Update", AnyInstance);
-                if (updateMethod != null) updateMethod.Invoke(clock, null);
-                else
-                {
-                    var triggerMethod = clockType.GetMethod("TriggerTimeoutForfeit", AnyInstance);
-                    if (triggerMethod != null) triggerMethod.Invoke(clock, new object[] { true });
-                }
                 yield return null;
             }
 
-            Assert.IsTrue(isMatchOverProp != null && (bool)isMatchOverProp.GetValue(gm), "Match should be marked over after natural expiration");
-            Assert.IsTrue(wasTimeoutProp != null && (bool)wasTimeoutProp.GetValue(gm), "WasTimeout should be true");
+            Assert.IsTrue((bool)isMatchOverProp.GetValue(gm), "Match should be marked over strictly by natural Update-driven expiration");
+            Assert.IsTrue((bool)wasTimeoutProp.GetValue(gm), "WasTimeout should be true");
 
             var winnerProp = gmType.GetProperty("Winner", AnyInstance) ?? gmType.GetProperty("MatchResult", AnyInstance);
-            if (winnerProp != null)
-            {
-                string winnerVal = winnerProp.GetValue(gm)?.ToString() ?? "";
-                Assert.IsTrue(winnerVal.IndexOf("Blue", StringComparison.OrdinalIgnoreCase) >= 0 || winnerVal == "2", 
-                    "Opposite player (Blue) should win when Red times out. Actual winner: " + winnerVal);
-            }
+            Assert.IsNotNull(winnerProp, "Winner or MatchResult property must exist on GameManager");
+            string winnerVal = winnerProp.GetValue(gm)?.ToString() ?? "";
+            Assert.IsTrue(winnerVal.IndexOf("Blue", StringComparison.OrdinalIgnoreCase) >= 0 || winnerVal == "2", 
+                "Opposite player (Blue) should win unconditionally when Red times out. Actual winner: " + winnerVal);
 
             yield return null;
             yield return null;
-            Assert.IsTrue((bool)isMatchOverProp.GetValue(gm));
+            Assert.IsTrue((bool)isMatchOverProp.GetValue(gm), "Match must remain concluded with single settlement");
 
             UnityEngine.Object.DestroyImmediate(clockGo);
             UnityEngine.Object.DestroyImmediate(gmGo);
