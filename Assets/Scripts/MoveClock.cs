@@ -10,8 +10,27 @@ public class MoveClock : MonoBehaviour
     public static MoveClock Instance { get; private set; }
 
     [Header("Clock Settings")]
-    public float turnDuration = 30f;
-    public float warningThreshold = 10f;
+    [SerializeField] private float _turnDuration = 30f;
+    public float turnDuration
+    {
+        get => _turnDuration;
+        set
+        {
+            _turnDuration = value;
+            State = new MoveClockState(_turnDuration, _warningThreshold);
+        }
+    }
+
+    [SerializeField] private float _warningThreshold = 10f;
+    public float warningThreshold
+    {
+        get => _warningThreshold;
+        set
+        {
+            _warningThreshold = value;
+            State = new MoveClockState(_turnDuration, _warningThreshold);
+        }
+    }
 
     [Header("UI Timer Bars")]
     public Image redTimerBar;
@@ -43,7 +62,7 @@ public class MoveClock : MonoBehaviour
         }
         Instance = this;
         if (State == null)
-            State = new MoveClockState(turnDuration, warningThreshold);
+            State = new MoveClockState(_turnDuration, _warningThreshold);
 
         EnsureTimerBars();
     }
@@ -150,7 +169,7 @@ public class MoveClock : MonoBehaviour
         if (!IsRankedMatch) return;
         ActiveIsRed = isRed;
         SettledTimeout = false;
-        if (State == null) State = new MoveClockState(turnDuration, warningThreshold);
+        if (State == null) State = new MoveClockState(_turnDuration, _warningThreshold);
         State.StartTurn(isRed);
         UpdateVisuals();
     }
@@ -171,7 +190,7 @@ public class MoveClock : MonoBehaviour
         if (SoloSettings.Enabled && ActiveIsRed == SoloSettings.BotPlaysRed)
             return;
 
-        if (State == null) State = new MoveClockState(turnDuration, warningThreshold);
+        if (State == null) State = new MoveClockState(_turnDuration, _warningThreshold);
         State.Tick(Time.deltaTime);
         UpdateVisuals();
 
@@ -194,7 +213,7 @@ public class MoveClock : MonoBehaviour
     public void UpdateVisuals()
     {
         if (State == null) return;
-        float fraction = turnDuration > 0f ? Mathf.Clamp01(State.RemainingSeconds / turnDuration) : 0f;
+        float fraction = _turnDuration > 0f ? Mathf.Clamp01(State.RemainingSeconds / _turnDuration) : 0f;
         bool isWarning = State.IsWarning;
 
         if (!IsRankedMatch)
