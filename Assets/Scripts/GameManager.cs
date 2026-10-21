@@ -19,13 +19,22 @@ public class GameManager : MonoBehaviour
     public bool WasTimeout { get; private set; }
     public EvaluationResult MatchResult { get; private set; }
     public string Winner => MatchResult == EvaluationResult.RedWin ? "Red" : MatchResult == EvaluationResult.BlueWin ? "Blue" : MatchResult == EvaluationResult.Draw ? "Draw" : null;
+    RankedMatchSession rankedSession;
 
     void Awake()
     {
         Instance = this;
         WasTimeout = false;
         MatchResult = EvaluationResult.InProgress;
+        if (SoloSettings.Enabled && SoloSettings.IsRanked && !PuzzleSettings.Enabled && !TraditionalSettings.Enabled)
+            rankedSession = new RankedMatchSession(BotTierRatings.RatingFor(SoloSettings.Tier), !SoloSettings.BotPlaysRed);
         if (backToMenuButton != null) backToMenuButton.SetActive(false);
+    }
+
+    void Start()
+    {
+        foreach (var hud in FindObjectsOfType<EloHud>())
+            hud.BindRankedSession(rankedSession);
     }
 
     void OnDestroy()
@@ -83,7 +92,13 @@ public class GameManager : MonoBehaviour
         if (player != null) player.enabled = false;
         bool draw = result == EvaluationResult.Draw;
         bool redWins = result == EvaluationResult.RedWin;
-        if (PuzzleSettings.Enabled) RecordPuzzleResult(draw, redWins);
+        // An admitted ranked match retains its identity even if menu settings change.
+        if (rankedSession != null)
+        {
+            rankedSession.TryComplete(draw ? (bool?)null : redWins);
+            EloHud.RefreshAll();
+        }
+        else if (PuzzleSettings.Enabled) RecordPuzzleResult(draw, redWins);
         // Traditional matches are always casual: no save stats, ranked Elo or solo ladder, even against a bot.
         else if (TraditionalSettings.Enabled) { }
         else if (SoloSettings.Enabled) RecordSoloResult(draw, redWins);
@@ -112,7 +127,7 @@ public class GameManager : MonoBehaviour
         if (!draw && redWins == PuzzleSettings.AttackerIsRed) PuzzleProgress.MarkSolved(PuzzleSettings.CurrentId);
     }
 
-    // Solo matches go to the separate solo ladder; ranked Elo is never touched.
+    // Casual Solo matches go to the separate solo ladder.
     static void RecordSoloResult(bool draw, bool redWins)
     {
         if (draw) { SoloLadder.RecordDraw(SoloSettings.Tier); return; }
