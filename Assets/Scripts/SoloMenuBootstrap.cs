@@ -63,7 +63,9 @@ public class SoloMenuBootstrap : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        var ranked = CloneButton(play, group, "RankedSoloButton", "Ranked Solo");
+        var opponent = KineticRank.Logic.SoloLadder.RecommendOpponent(PlayerRankStore.GetProfile().rating);
+        var rankedLabel = $"Ranked Solo\n<size=60%>vs {opponent} · {BotTierRatings.RatingFor(opponent)}</size>";
+        var ranked = CloneButton(play, group, "RankedSoloButton", rankedLabel);
         ranked.transform.SetSiblingIndex(play.transform.GetSiblingIndex() + 1);
         ranked.onClick.AddListener(StartRanked);
         var solo = CloneButton(play, group, "SoloButton", "Casual Solo");
