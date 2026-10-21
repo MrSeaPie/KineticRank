@@ -1,147 +1,240 @@
 using System;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using KineticRank.Logic;
 
+[DefaultExecutionOrder(-50)]
 public class MoveClock : MonoBehaviour
 {
     public static MoveClock Instance { get; private set; }
 
-    [Header("UI References")]
-    public Image redTimerBar;
-    public Image blueTimerBar;
-
-    [Header("Settings")]
+    [Header("Clock Settings")]
     public float turnDuration = 30f;
     public float warningThreshold = 10f;
 
-    public static bool IsRankedMatch { get; set; } = false;
+    [Header("UI Timer Bars")]
+    public Image redTimerBar;
+    public Image blueTimerBar;
 
     public MoveClockState State { get; private set; }
-    public bool ActiveIsRed => activeIsRed;
+    public bool ActiveIsRed { get; private set; } = true;
+    public bool MatchOver { get; private set; } = false;
+    public bool SettledTimeout { get; private set; } = false;
 
-    bool activeIsRed = true;
-    bool isOverlayPaused = false;
-    bool isBotPaused = false;
-    bool matchOver = false;
+    public static bool ForceRankedForTesting { get; set; } = false;
 
-    Color normalColor = new Color(0.2f, 0.7f, 0.2f, 1f);
-    Color warningColor = new Color(0.9f, 0.2f, 0.2f, 1f);
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    public static void AutoInstall()
+    {
+        if (UnityEngine.Object.FindObjectOfType<GameManager>() != null && Instance == null)
+        {
+            var go = new GameObject("MoveClock");
+            go.AddComponent<MoveClock>();
+        }
+    }
 
     void Awake()
     {
-        Instance = this;
-        State = new MoveClockState(turnDuration, warningThreshold);
-    }
-
-    void OnEnable()
-    {
-        PlayerController.MovePlaced += OnMovePlaced;
-    }
-
-    void OnDisable()
-    {
-        PlayerController.MovePlaced -= OnMovePlaced;
-    }
-
-    void Start()
-    {
-        if (PuzzleSettings.Enabled || !IsRankedMatch)
+        if (Instance != null && Instance != this)
         {
-            enabled = false;
-            HideBars();
+            Destroy(gameObject);
             return;
         }
+        Instance = this;
+        if (State == null)
+            State = new MoveClockState(turnDuration, warningThreshold);
 
-        activeIsRed = RematchTracker.CurrentFirstMoverIsRed;
-        State.StartTurn();
+        EnsureTimerBars();
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    public static bool IsRankedMatch
+    {
+        get
+        {
+            if (ForceRankedForTesting) return true;
+
+            var puzzleType = Type.GetType("PuzzleSettings");
+            if (puzzleType != null)
+            {
+                var prop = puzzleType.GetProperty("Enabled", BindingFlags.Public | BindingFlags.Static);
+                if (prop != null && (bool)prop.GetValue(null)) return false;
+            }
+
+            var tutType = Type.GetType("TutorialSettings");
+            if (tutType != null)
+            {
+                var prop = tutType.GetProperty("Enabled", BindingFlags.Public | BindingFlags.Static);
+                if (prop != null && (bool)prop.GetValue(null)) return false;
+            }
+
+            var tradType = Type.GetType("TraditionalSettings");
+            if (tradType != null)
+            {
+                var prop = tradType.GetProperty("Enabled", BindingFlags.Public | BindingFlags.Static);
+                if (prop != null && (bool)prop.GetValue(null)) return false;
+            }
+
+            var soloType = Type.GetType("SoloSettings");
+            if (soloType != null)
+            {
+                var isRankedProp = soloType.GetProperty("IsRanked", BindingFlags.Public | BindingFlags.Static);
+                if (isRankedProp != null && (bool)isRankedProp.GetValue(null)) return true;
+            }
+
+            var rankedType = Type.GetType("RankedSettings");
+            if (rankedType != null)
+            {
+                var prop = rankedType.GetProperty("Enabled", BindingFlags.Public | BindingFlags.Static);
+                if (prop != null && (bool)prop.GetValue(null)) return true;
+            }
+
+            return false;
+        }
+    }
+
+    public void EnsureTimerBars()
+    {
+        if (redTimerBar == null || blueTimerBar == null)
+        {
+            var images = FindObjectsOfType<Image>(true);
+            foreach (var img in images)
+            {
+                if (img.gameObject.name == "RedMoveClockBar" || img.gameObject.name == "RedTimerBar") redTimerBar = img;
+                if (img.gameObject.name == "BlueMoveClockBar" || img.gameObject.name == "BlueTimerBar") blueTimerBar = img;
+            }
+        }
+
+        if (redTimerBar == null || blueTimerBar == null)
+        {
+            var canvas = FindObjectOfType<Canvas>();
+            if (canvas != null)
+            {
+                if (redTimerBar == null)
+                {
+                    var redGo = CreateBarObject(canvas.transform, "RedMoveClockBar", new Vector2(-220f, -180f), new Color(0.85f, 0.25f, 0.25f));
+                    redTimerBar = redGo.GetComponent<Image>();
+                }
+                if (blueTimerBar == null)
+                {
+                    var blueGo = CreateBarObject(canvas.transform, "BlueMoveClockBar", new Vector2(220f, -180f), new Color(0.25f, 0.45f, 0.85f));
+                    blueTimerBar = blueGo.GetComponent<Image>();
+                }
+            }
+        }
+    }
+
+    static GameObject CreateBarObject(Transform parent, string name, Vector2 anchoredPos, Color color)
+    {
+        var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        go.transform.SetParent(parent, false);
+        var rt = go.GetComponent<RectTransform>();
+        rt.sizeDelta = new Vector2(160f, 14f);
+        rt.anchoredPosition = anchoredPos;
+        var img = go.GetComponent<Image>();
+        img.type = Image.Type.Filled;
+        img.fillMethod = Image.FillMethod.Horizontal;
+        img.fillOrigin = (int)Image.OriginHorizontal.Left;
+        img.fillAmount = 1f;
+        img.color = color;
+        return go;
+    }
+
+    public void StartTurn(bool isRed)
+    {
+        if (!IsRankedMatch) return;
+        ActiveIsRed = isRed;
+        SettledTimeout = false;
+        if (State == null) State = new MoveClockState(turnDuration, warningThreshold);
+        State.StartTurn(isRed);
+        UpdateVisuals();
+    }
+
+    public void StopClock()
+    {
+        MatchOver = true;
         UpdateVisuals();
     }
 
     void Update()
     {
-        if (matchOver) return;
-        if (GameManager.Instance != null && (GameManager.Instance.IsMatchOver || GameManager.Instance.IsInputLocked))
+        if (MatchOver || SettledTimeout || !IsRankedMatch) return;
+
+        if (HowToPlayOverlay.Instance != null && HowToPlayOverlay.Instance.IsOpen)
             return;
 
-        bool overlayOpen = HowToPlayOverlay.Instance != null && HowToPlayOverlay.Instance.gameObject.activeInHierarchy;
-        if (overlayOpen != isOverlayPaused)
-        {
-            isOverlayPaused = overlayOpen;
-            if (isOverlayPaused) State.Pause();
-            else if (!isBotPaused) State.Resume();
-        }
+        if (SoloSettings.Enabled && ActiveIsRed == SoloSettings.BotPlaysRed)
+            return;
 
-        PlayerController pc = FindObjectOfType<PlayerController>();
-        bool botThinking = pc != null && !pc.IsHumanTurn;
-        if (botThinking != isBotPaused)
-        {
-            isBotPaused = botThinking;
-            if (isBotPaused) State.Pause();
-            else if (!isOverlayPaused) State.Resume();
-        }
-
-        if (State.IsPaused) return;
-
+        if (State == null) State = new MoveClockState(turnDuration, warningThreshold);
         State.Tick(Time.deltaTime);
         UpdateVisuals();
 
-        if (State.IsExpired)
+        if (State.IsExpired && !SettledTimeout)
         {
-            matchOver = true;
-            OnTimeout();
+            SettledTimeout = true;
+            MatchOver = true;
+            TriggerTimeoutForfeit(ActiveIsRed);
         }
     }
 
-    void OnMovePlaced(int col, MoveKind kind, bool moverWasRed)
+    public void TriggerTimeoutForfeit(bool forfeiterIsRed)
     {
-        if (matchOver) return;
-
-        activeIsRed = !moverWasRed;
-        State.StartTurn();
-        UpdateVisuals();
-    }
-
-    void OnTimeout()
-    {
-        bool redTimedOut = activeIsRed;
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.TimeoutForfeit(redTimedOut);
+            var gm = GameManager.Instance;
+            var mi = gm.GetType().GetMethod("ForfeitTimeout", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (mi != null)
+            {
+                mi.Invoke(gm, new object[] { forfeiterIsRed });
+            }
         }
     }
 
-    void UpdateVisuals()
+    public void UpdateVisuals()
     {
-        float frac = State.FractionRemaining;
-        Color barColor = State.IsWarning ? warningColor : normalColor;
+        if (State == null) return;
+        float fraction = State.DrainFraction;
+        bool isWarning = State.IsWarning;
+
+        if (!IsRankedMatch)
+        {
+            if (redTimerBar != null) redTimerBar.gameObject.SetActive(false);
+            if (blueTimerBar != null) blueTimerBar.gameObject.SetActive(false);
+            return;
+        }
 
         if (redTimerBar != null)
         {
-            bool show = activeIsRed && !matchOver;
-            redTimerBar.gameObject.SetActive(show);
-            if (show)
+            redTimerBar.gameObject.SetActive(true);
+            if (ActiveIsRed)
             {
-                redTimerBar.fillAmount = frac;
-                redTimerBar.color = barColor;
+                redTimerBar.fillAmount = fraction;
+                redTimerBar.color = isWarning ? Color.red : new Color(0.85f, 0.25f, 0.25f);
+            }
+            else
+            {
+                redTimerBar.fillAmount = 0f;
             }
         }
 
         if (blueTimerBar != null)
         {
-            bool show = !activeIsRed && !matchOver;
-            blueTimerBar.gameObject.SetActive(show);
-            if (show)
+            blueTimerBar.gameObject.SetActive(true);
+            if (!ActiveIsRed)
             {
-                blueTimerBar.fillAmount = frac;
-                blueTimerBar.color = barColor;
+                blueTimerBar.fillAmount = fraction;
+                blueTimerBar.color = isWarning ? Color.red : new Color(0.25f, 0.45f, 0.85f);
+            }
+            else
+            {
+                blueTimerBar.fillAmount = 0f;
             }
         }
-    }
-
-    void HideBars()
-    {
-        if (redTimerBar != null) redTimerBar.gameObject.SetActive(false);
-        if (blueTimerBar != null) blueTimerBar.gameObject.SetActive(false);
     }
 }
