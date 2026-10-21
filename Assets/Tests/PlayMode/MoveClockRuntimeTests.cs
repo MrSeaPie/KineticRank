@@ -294,5 +294,71 @@ namespace KineticRank.Tests.PlayMode
             UnityEngine.Object.DestroyImmediate(gmGo);
             yield return null;
         }
+
+        [UnityTest]
+        public IEnumerator MoveClockComponent_TurnTransition_SynchronizesActiveSideAndResetsTimer()
+        {
+            var gmType = RuntimeType("GameManager");
+            var pcType = RuntimeType("PlayerController");
+            var clockType = RuntimeType("MoveClock");
+
+            var gmGo = new GameObject("GameManagerTurnHandoffFixture");
+            var gm = gmGo.AddComponent(gmType);
+
+            var pcGo = new GameObject("PlayerControllerTurnHandoffFixture");
+            var pc = pcGo.AddComponent(pcType);
+
+            var clockGo = new GameObject("MoveClockTurnHandoffFixture");
+            var clock = clockGo.AddComponent(clockType) as MonoBehaviour;
+
+            var forceRankedProp = clockType.GetProperty("ForceRankedForTesting", AnyInstance | AnyStatic) 
+                ?? gmType.GetProperty("ForceRankedForTesting", AnyInstance | AnyStatic);
+            if (forceRankedProp != null && forceRankedProp.CanWrite)
+            {
+                forceRankedProp.SetValue(forceRankedProp.GetSetMethod(true).IsStatic ? null : (object)clock, true);
+            }
+
+            var startTurnClock = clockType.GetMethod("StartTurn", new[] { typeof(bool) });
+            if (startTurnClock != null) startTurnClock.Invoke(clock, new object[] { true });
+
+            yield return null;
+
+            var stateObj = GetProperty(clock, "State");
+            var stateType = stateObj.GetType();
+            var tickMethod = stateType.GetMethod("Tick", new[] { typeof(float) });
+            tickMethod.Invoke(stateObj, new object[] { 20f });
+
+            var remProp = stateType.GetProperty("RemainingSeconds");
+            float remBefore = (float)remProp.GetValue(stateObj);
+            Assert.AreEqual(10f, remBefore, 1e-4f, "Timer should be depleted to 10s");
+
+            var setResolvingMethod = gmType.GetProperty("IsResolvingMove", AnyInstance)?.GetSetMethod(true);
+            var resolvingField = gmType.GetField("<IsResolvingMove>k__BackingField", AnyInstance);
+            if (setResolvingMethod != null) setResolvingMethod.Invoke(gm, new object[] { true });
+            else if (resolvingField != null) resolvingField.SetValue(gm, true);
+
+            yield return null;
+
+            var isRedTurnField = pcType.GetField("isRedTurn", AnyInstance) ?? pcType.GetField("_isRedTurn", AnyInstance);
+            var isRedTurnProp = pcType.GetProperty("isRedTurn", AnyInstance) ?? pcType.GetProperty("IsRedTurn", AnyInstance);
+            if (isRedTurnProp != null && isRedTurnProp.CanWrite) isRedTurnProp.SetValue(pc, false);
+            else if (isRedTurnField != null) isRedTurnField.SetValue(pc, false);
+
+            if (setResolvingMethod != null) setResolvingMethod.Invoke(gm, new object[] { false });
+            else if (resolvingField != null) resolvingField.SetValue(gm, false);
+
+            yield return null;
+
+            var activeIsRedProp = clockType.GetProperty("ActiveIsRed", AnyInstance);
+            Assert.IsFalse((bool)activeIsRedProp.GetValue(clock), "MoveClock.ActiveIsRed should automatically synchronize to PlayerController turn (false/Blue)");
+
+            float remAfter = (float)remProp.GetValue(stateObj);
+            Assert.Greater(remAfter, 25f, "MoveClock timer should reset to fresh turn duration upon turn handoff");
+
+            UnityEngine.Object.DestroyImmediate(clockGo);
+            UnityEngine.Object.DestroyImmediate(pcGo);
+            UnityEngine.Object.DestroyImmediate(gmGo);
+            yield return null;
+        }
     }
 }
