@@ -17,11 +17,14 @@ public class GameManager : MonoBehaviour
     public bool IsResolvingMove { get; private set; }
     public bool IsInputLocked => IsMatchOver || IsResolvingMove;
     public bool WasTimeout { get; private set; }
+    public EvaluationResult MatchResult { get; private set; }
+    public string Winner => MatchResult == EvaluationResult.RedWin ? "Red" : MatchResult == EvaluationResult.BlueWin ? "Blue" : MatchResult == EvaluationResult.Draw ? "Draw" : null;
 
     void Awake()
     {
         Instance = this;
         WasTimeout = false;
+        MatchResult = EvaluationResult.InProgress;
         if (backToMenuButton != null) backToMenuButton.SetActive(false);
     }
 
@@ -75,6 +78,7 @@ public class GameManager : MonoBehaviour
     {
         if (IsMatchOver) return;
         IsMatchOver = true;
+        MatchResult = result;
         IsResolvingMove = false;
         if (player != null) player.enabled = false;
         bool draw = result == EvaluationResult.Draw;
