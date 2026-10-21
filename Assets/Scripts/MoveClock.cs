@@ -187,6 +187,9 @@ public class MoveClock : MonoBehaviour
         if (HowToPlayOverlay.Instance != null && HowToPlayOverlay.Instance.IsOpen)
             return;
 
+        if (GameManager.Instance != null && GameManager.Instance.IsResolvingMove)
+            return;
+
         if (SoloSettings.Enabled && ActiveIsRed == SoloSettings.BotPlaysRed)
             return;
 

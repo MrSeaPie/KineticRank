@@ -242,5 +242,57 @@ namespace KineticRank.Tests.PlayMode
             UnityEngine.Object.DestroyImmediate(gmGo);
             yield return null;
         }
+
+        [UnityTest]
+        public IEnumerator MoveClockComponent_ResolvingMove_PausesClockProgression()
+        {
+            var gmType = RuntimeType("GameManager");
+            var clockType = RuntimeType("MoveClock");
+
+            var gmGo = new GameObject("GameManagerResolvingFixture");
+            var gm = gmGo.AddComponent(gmType);
+
+            var clockGo = new GameObject("MoveClockResolvingFixture");
+            var clock = clockGo.AddComponent(clockType) as MonoBehaviour;
+
+            var forceRankedProp = clockType.GetProperty("ForceRankedForTesting", AnyInstance | AnyStatic) 
+                ?? gmType.GetProperty("ForceRankedForTesting", AnyInstance | AnyStatic);
+            if (forceRankedProp != null && forceRankedProp.CanWrite)
+            {
+                forceRankedProp.SetValue(forceRankedProp.GetSetMethod(true).IsStatic ? null : (object)clock, true);
+            }
+
+            var startTurnClock = clockType.GetMethod("StartTurn", new[] { typeof(bool) });
+            if (startTurnClock != null) startTurnClock.Invoke(clock, new object[] { true });
+
+            yield return null;
+
+            var setResolvingMethod = gmType.GetProperty("IsResolvingMove", AnyInstance)?.GetSetMethod(true);
+            var resolvingField = gmType.GetField("<IsResolvingMove>k__BackingField", AnyInstance);
+            if (setResolvingMethod != null) setResolvingMethod.Invoke(gm, new object[] { true });
+            else if (resolvingField != null) resolvingField.SetValue(gm, true);
+
+            var stateObj = GetProperty(clock, "State");
+            var stateType = stateObj.GetType();
+            var remProp = stateType.GetProperty("RemainingSeconds");
+            float remWhileResolving1 = (float)remProp.GetValue(stateObj);
+
+            for (int i = 0; i < 5; i++) yield return null;
+
+            float remWhileResolving2 = (float)remProp.GetValue(stateObj);
+            Assert.AreEqual(remWhileResolving1, remWhileResolving2, 1e-4f, "MoveClock must pause while GameManager.IsResolvingMove is true");
+
+            if (setResolvingMethod != null) setResolvingMethod.Invoke(gm, new object[] { false });
+            else if (resolvingField != null) resolvingField.SetValue(gm, false);
+
+            for (int i = 0; i < 5; i++) yield return null;
+
+            float remResumed = (float)remProp.GetValue(stateObj);
+            Assert.Less(remResumed, remWhileResolving2, "MoveClock must resume ticking once GameManager.IsResolvingMove becomes false");
+
+            UnityEngine.Object.DestroyImmediate(clockGo);
+            UnityEngine.Object.DestroyImmediate(gmGo);
+            yield return null;
+        }
     }
 }
