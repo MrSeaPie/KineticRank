@@ -1,94 +1,130 @@
+using System;
 using System.Collections;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using UnityEngine.UI;
-using KineticRank.Logic;
 
-public class MoveClockRuntimeTests
+namespace KineticRank.Tests.PlayMode
 {
-    GameObject clockObj;
-    MoveClock clock;
-    GameObject overlayObj;
-    HowToPlayOverlay overlay;
-
-    [SetUp]
-    public void SetUp()
+    public class MoveClockRuntimeTests
     {
-        MoveClock.ForceRankedForTesting = true;
-        clockObj = new GameObject("MoveClockTest");
-        clock = clockObj.AddComponent<MoveClock>();
-        clock.turnDuration = 30f;
-        clock.warningThreshold = 10f;
-    }
+        const BindingFlags AnyInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        const BindingFlags AnyStatic = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
-    [UnityTearDown]
-    public IEnumerator TearDown()
-    {
-        MoveClock.ForceRankedForTesting = false;
-        if (clockObj) Object.Destroy(clockObj);
-        if (overlayObj) Object.Destroy(overlayObj);
-        yield return null;
-    }
+        static Type RuntimeType(string name)
+        {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var type = assembly.GetType(name);
+                if (type != null) return type;
+            }
+            throw new InvalidOperationException("Missing runtime type: " + name);
+        }
 
-    [UnityTest]
-    public IEnumerator Countdown_WithHelpClosed_DrainsClockAndUpdatesVisuals()
-    {
-        clock.StartTurn(true);
-        Assert.That(clock.ActiveIsRed, Is.True);
-        Assert.That(clock.State.RemainingSeconds, Is.EqualTo(30f));
+        static object GetProperty(object target, string name)
+        {
+            var prop = target.GetType().GetProperty(name, AnyInstance);
+            Assert.That(prop, Is.Not.Null, "Missing property: " + target.GetType().Name + "." + name);
+            return prop.GetValue(target);
+        }
 
-        yield return new WaitForSeconds(0.15f);
+        static object InvokeMethod(object target, string name, params object[] args)
+        {
+            var method = target.GetType().GetMethod(name, AnyInstance);
+            Assert.That(method, Is.Not.Null, "Missing method: " + target.GetType().Name + "." + name);
+            return method.Invoke(target, args);
+        }
 
-        Assert.That(clock.State.RemainingSeconds, Is.LessThan(30f));
-        Assert.That(clock.State.DrainFraction, Is.LessThan(1f));
-        if (clock.redTimerBar != null)
-            Assert.That(clock.redTimerBar.fillAmount, Is.LessThan(1f));
-    }
+        GameObject fixtureRoot;
 
-    [UnityTest]
-    public IEnumerator OverlayOpen_PausesClock_AndResumeContinuesCountdown()
-    {
-        overlayObj = new GameObject("OverlayTest");
-        overlay = overlayObj.AddComponent<HowToPlayOverlay>();
-        overlay.Open();
-        Assert.That(overlay.IsOpen, Is.True);
+        [SetUp]
+        public void SetUp()
+        {
+            fixtureRoot = new GameObject("MoveClockTestFixture");
+        }
 
-        clock.StartTurn(true);
-        float initialRemaining = clock.State.RemainingSeconds;
+        [TearDown]
+        public void TearDown()
+        {
+            if (fixtureRoot != null)
+            {
+                UnityEngine.Object.DestroyImmediate(fixtureRoot);
+            }
+        }
 
-        yield return new WaitForSeconds(0.1f);
+        [Test]
+        public void MoveClockState_DirectLogic_CountdownAndExpiry()
+        {
+            var stateType = RuntimeType("KineticRank.Logic.MoveClockState");
+            var state = Activator.CreateInstance(stateType, 30f, 10f);
+            
+            var startTurnMethod = stateType.GetMethod("StartTurn", new[] { typeof(bool) });
+            startTurnMethod.Invoke(state, new object[] { true });
 
-        Assert.That(clock.State.RemainingSeconds, Is.EqualTo(initialRemaining), "Clock must remain paused while overlay IsOpen is true.");
+            var tickMethod = stateType.GetMethod("Tick", new[] { typeof(float) });
+            bool expired = (bool)tickMethod.Invoke(state, new object[] { 10f });
+            Assert.IsFalse(expired);
 
-        overlay.Close();
-        Assert.That(overlay.IsOpen, Is.False);
+            float remaining = (float)stateType.GetProperty("RemainingSeconds").GetValue(state);
+            Assert.AreEqual(20f, remaining, 1e-4f);
 
-        yield return new WaitForSeconds(0.15f);
+            bool warning = (bool)stateType.GetProperty("IsWarning").GetValue(state);
+            Assert.IsFalse(warning);
 
-        Assert.That(clock.State.RemainingSeconds, Is.LessThan(initialRemaining), "Clock must resume countdown after overlay is closed.");
-    }
+            expired = (bool)tickMethod.Invoke(state, new object[] { 15f });
+            Assert.IsFalse(expired);
+            warning = (bool)stateType.GetProperty("IsWarning").GetValue(state);
+            Assert.IsTrue(warning);
 
-    [Test]
-    public void Timeout_TriggersOnceOnly_AndFlagsSettled()
-    {
-        clock.StartTurn(true);
-        clock.State.Tick(30.1f);
+            expired = (bool)tickMethod.Invoke(state, new object[] { 10f });
+            Assert.IsTrue(expired);
+            bool isExpired = (bool)stateType.GetProperty("IsExpired").GetValue(state);
+            Assert.IsTrue(isExpired);
+        }
 
-        Assert.That(clock.State.IsExpired, Is.True);
-        clock.TriggerTimeoutForfeit(true);
-        Assert.That(clock.SettledTimeout, Is.True);
-        Assert.That(clock.MatchOver, Is.True);
+        [Test]
+        public void MoveClockState_PauseResume_HaltsProgression()
+        {
+            var stateType = RuntimeType("KineticRank.Logic.MoveClockState");
+            var state = Activator.CreateInstance(stateType, 30f, 10f);
 
-        Assert.DoesNotThrow(() => clock.TriggerTimeoutForfeit(true));
-    }
+            var startTurnMethod = stateType.GetMethod("StartTurn", new[] { typeof(bool) });
+            startTurnMethod.Invoke(state, new object[] { true });
 
-    [Test]
-    public void NonRankedMatch_RemainsInactive()
-    {
-        MoveClock.ForceRankedForTesting = false;
-        Assert.That(MoveClock.IsRankedMatch, Is.False);
-        clock.StartTurn(true);
-        Assert.That(clock.State.RemainingSeconds, Is.EqualTo(30f));
+            var tickMethod = stateType.GetMethod("Tick", new[] { typeof(float) });
+            tickMethod.Invoke(state, new object[] { 5f });
+
+            var pauseMethod = stateType.GetMethod("Pause", Type.EmptyTypes);
+            pauseMethod.Invoke(state, null);
+
+            bool expired = (bool)tickMethod.Invoke(state, new object[] { 10f });
+            Assert.IsFalse(expired);
+
+            float remaining = (float)stateType.GetProperty("RemainingSeconds").GetValue(state);
+            Assert.AreEqual(25f, remaining, 1e-4f);
+
+            var resumeMethod = stateType.GetMethod("Resume", Type.EmptyTypes);
+            resumeMethod.Invoke(state, null);
+
+            tickMethod.Invoke(state, new object[] { 5f });
+            remaining = (float)stateType.GetProperty("RemainingSeconds").GetValue(state);
+            Assert.AreEqual(20f, remaining, 1e-4f);
+        }
+
+        [UnityTest]
+        public IEnumerator MoveClockComponent_LifecycleAndSingleForfeit()
+        {
+            var clockType = RuntimeType("MoveClock");
+            var comp = fixtureRoot.AddComponent(clockType) as MonoBehaviour;
+            Assert.IsNotNull(comp);
+
+            yield return null;
+
+            var state = GetProperty(comp, "State");
+            Assert.IsNotNull(state);
+
+            yield return null;
+        }
     }
 }

@@ -199,7 +199,7 @@ public class MoveClock : MonoBehaviour
     public void UpdateVisuals()
     {
         if (State == null) return;
-        float fraction = State.DrainFraction;
+        float fraction = turnDuration > 0f ? Mathf.Clamp01(State.RemainingSeconds / turnDuration) : 0f;
         bool isWarning = State.IsWarning;
 
         if (!IsRankedMatch)
