@@ -43,6 +43,15 @@ public class MoveClock : MonoBehaviour
 
     public static bool ForceRankedForTesting { get; set; } = false;
 
+    PlayerController _cachedPlayerController;
+
+    PlayerController GetPlayerController()
+    {
+        if (_cachedPlayerController == null)
+            _cachedPlayerController = FindObjectOfType<PlayerController>();
+        return _cachedPlayerController;
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     public static void AutoInstall()
     {
@@ -189,6 +198,12 @@ public class MoveClock : MonoBehaviour
 
         if (GameManager.Instance != null && GameManager.Instance.IsResolvingMove)
             return;
+
+        var pc = GetPlayerController();
+        if (pc != null && pc.IsRedTurn != ActiveIsRed)
+        {
+            StartTurn(pc.IsRedTurn);
+        }
 
         if (SoloSettings.Enabled && ActiveIsRed == SoloSettings.BotPlaysRed)
             return;
