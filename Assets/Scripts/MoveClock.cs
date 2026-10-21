@@ -187,12 +187,7 @@ public class MoveClock : MonoBehaviour
     {
         if (GameManager.Instance != null)
         {
-            var gm = GameManager.Instance;
-            var mi = gm.GetType().GetMethod("ForfeitTimeout", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (mi != null)
-            {
-                mi.Invoke(gm, new object[] { forfeiterIsRed });
-            }
+            GameManager.Instance.TimeoutForfeit(forfeiterIsRed);
         }
     }
 

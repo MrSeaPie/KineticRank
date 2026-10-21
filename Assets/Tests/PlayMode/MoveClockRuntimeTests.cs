@@ -126,5 +126,39 @@ namespace KineticRank.Tests.PlayMode
 
             yield return null;
         }
+
+        [UnityTest]
+        public IEnumerator MoveClockComponent_TimeoutForfeit_FinishesMatchSingleSettlement()
+        {
+            var gmType = RuntimeType("GameManager");
+            var clockType = RuntimeType("MoveClock");
+
+            var gmGo = new GameObject("GameManagerTimeoutFixture");
+            var gm = gmGo.AddComponent(gmType);
+
+            var clockGo = new GameObject("MoveClockTimeoutFixture");
+            var clock = clockGo.AddComponent(clockType) as MonoBehaviour;
+
+            yield return null;
+
+            var triggerMethod = clockType.GetMethod("TriggerTimeoutForfeit", BindingFlags.Public | BindingFlags.Instance);
+            Assert.IsNotNull(triggerMethod, "Missing TriggerTimeoutForfeit method");
+            triggerMethod.Invoke(clock, new object[] { true });
+
+            var isMatchOverProp = gmType.GetProperty("IsMatchOver", BindingFlags.Public | BindingFlags.Instance);
+            var wasTimeoutProp = gmType.GetProperty("WasTimeout", BindingFlags.Public | BindingFlags.Instance);
+
+            Assert.IsTrue((bool)isMatchOverProp.GetValue(gm), "Match should be marked over after timeout forfeit");
+            Assert.IsTrue((bool)wasTimeoutProp.GetValue(gm), "WasTimeout should be true after timeout forfeit");
+
+            // Verify idempotency / single settlement on subsequent calls
+            triggerMethod.Invoke(clock, new object[] { false });
+            Assert.IsTrue((bool)isMatchOverProp.GetValue(gm));
+            Assert.IsTrue((bool)wasTimeoutProp.GetValue(gm));
+
+            UnityEngine.Object.DestroyImmediate(clockGo);
+            UnityEngine.Object.DestroyImmediate(gmGo);
+            yield return null;
+        }
     }
 }
