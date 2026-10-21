@@ -63,6 +63,11 @@ namespace KineticRank.Tests.PlayMode
             if (instProp != null && instProp.CanWrite) instProp.SetValue(null, null);
             var instField = gmType.GetField("instance", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) ?? gmType.GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
             if (instField != null) instField.SetValue(null, null);
+
+            var soloType = RuntimeType("SoloSettings");
+            var clearMethod = soloType?.GetMethod("Clear", BindingFlags.Public | BindingFlags.Static)
+                ?? soloType?.GetMethod("Reset", BindingFlags.Public | BindingFlags.Static);
+            clearMethod?.Invoke(null, null);
         }
 
         [Test]
@@ -142,6 +147,17 @@ namespace KineticRank.Tests.PlayMode
         [UnityTest]
         public IEnumerator MoveClockComponent_TimeoutForfeit_FinishesMatchSingleSettlement()
         {
+            var rankStoreType = RuntimeType("PlayerRankStore");
+            var beginScopeMethod = rankStoreType?.GetMethod("BeginIsolatedTestScope", BindingFlags.Public | BindingFlags.Static);
+            var scope = beginScopeMethod?.Invoke(null, null) as IDisposable;
+
+            var soloSettingsType = RuntimeType("SoloSettings");
+            var startRankedMethod = soloSettingsType?.GetMethod("StartRankedSolo", BindingFlags.Public | BindingFlags.Static);
+            if (startRankedMethod != null)
+            {
+                startRankedMethod.Invoke(null, new object[] { 3, true });
+            }
+
             var gmType = RuntimeType("GameManager");
             var clockType = RuntimeType("MoveClock");
 
@@ -153,29 +169,39 @@ namespace KineticRank.Tests.PlayMode
 
             yield return null;
 
-            var triggerMethod = clockType.GetMethod("TriggerTimeoutForfeit", BindingFlags.Public | BindingFlags.Instance);
-            Assert.IsNotNull(triggerMethod, "Missing TriggerTimeoutForfeit method");
-            triggerMethod.Invoke(clock, new object[] { true });
+            try
+            {
+                var triggerMethod = clockType.GetMethod("TriggerTimeoutForfeit", BindingFlags.Public | BindingFlags.Instance);
+                Assert.IsNotNull(triggerMethod, "Missing TriggerTimeoutForfeit method");
+                triggerMethod.Invoke(clock, new object[] { true });
 
-            var isMatchOverProp = gmType.GetProperty("IsMatchOver", BindingFlags.Public | BindingFlags.Instance);
-            var wasTimeoutProp = gmType.GetProperty("WasTimeout", BindingFlags.Public | BindingFlags.Instance);
+                var isMatchOverProp = gmType.GetProperty("IsMatchOver", BindingFlags.Public | BindingFlags.Instance);
+                var wasTimeoutProp = gmType.GetProperty("WasTimeout", BindingFlags.Public | BindingFlags.Instance);
 
-            Assert.IsTrue((bool)isMatchOverProp.GetValue(gm), "Match should be marked over after timeout forfeit");
-            Assert.IsTrue((bool)wasTimeoutProp.GetValue(gm), "WasTimeout should be true after timeout forfeit");
+                Assert.IsTrue((bool)isMatchOverProp.GetValue(gm), "Match should be marked over after timeout forfeit");
+                Assert.IsTrue((bool)wasTimeoutProp.GetValue(gm), "WasTimeout should be true after timeout forfeit");
 
-            var winnerProp = gmType.GetProperty("Winner", AnyInstance) ?? gmType.GetProperty("MatchResult", AnyInstance);
-            Assert.IsNotNull(winnerProp, "Winner or MatchResult property must exist on GameManager");
-            string winnerVal = winnerProp.GetValue(gm)?.ToString() ?? "";
-            Assert.IsTrue(winnerVal.IndexOf("Blue", StringComparison.OrdinalIgnoreCase) >= 0 || winnerVal == "2",
-                "Expected Blue win on Red timeout forfeit, got: " + winnerVal);
+                var winnerProp = gmType.GetProperty("Winner", AnyInstance) ?? gmType.GetProperty("MatchResult", AnyInstance);
+                Assert.IsNotNull(winnerProp, "Winner or MatchResult property must exist on GameManager");
+                string winnerVal = winnerProp.GetValue(gm)?.ToString() ?? "";
+                Assert.IsTrue(winnerVal.IndexOf("Blue", StringComparison.OrdinalIgnoreCase) >= 0 || winnerVal == "2",
+                    "Expected Blue win on Red timeout forfeit, got: " + winnerVal);
 
-            // Verify idempotency / single settlement on subsequent calls
-            triggerMethod.Invoke(clock, new object[] { false });
-            Assert.IsTrue((bool)isMatchOverProp.GetValue(gm));
-            Assert.IsTrue((bool)wasTimeoutProp.GetValue(gm));
+                // Verify idempotency / single settlement on subsequent calls
+                triggerMethod.Invoke(clock, new object[] { false });
+                Assert.IsTrue((bool)isMatchOverProp.GetValue(gm));
+                Assert.IsTrue((bool)wasTimeoutProp.GetValue(gm));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(clockGo);
+                UnityEngine.Object.DestroyImmediate(gmGo);
+                scope?.Dispose();
+                var clearMethod = soloSettingsType?.GetMethod("Clear", BindingFlags.Public | BindingFlags.Static)
+                    ?? soloSettingsType?.GetMethod("Reset", BindingFlags.Public | BindingFlags.Static);
+                clearMethod?.Invoke(null, null);
+            }
 
-            UnityEngine.Object.DestroyImmediate(clockGo);
-            UnityEngine.Object.DestroyImmediate(gmGo);
             yield return null;
         }
 
