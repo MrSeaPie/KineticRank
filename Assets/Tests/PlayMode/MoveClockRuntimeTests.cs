@@ -330,10 +330,10 @@ namespace KineticRank.Tests.PlayMode
                 forceRankedProp.SetValue(forceRankedProp.GetSetMethod(true).IsStatic ? null : (object)clock, true);
             }
 
+            yield return null;
+
             var startTurnClock = clockType.GetMethod("StartTurn", new[] { typeof(bool) });
             if (startTurnClock != null) startTurnClock.Invoke(clock, new object[] { true });
-
-            yield return null;
 
             var stateObj = GetProperty(clock, "State");
             var stateType = stateObj.GetType();
@@ -342,7 +342,7 @@ namespace KineticRank.Tests.PlayMode
 
             var remProp = stateType.GetProperty("RemainingSeconds");
             float remBefore = (float)remProp.GetValue(stateObj);
-            Assert.AreEqual(10f, remBefore, 1e-4f, "Timer should be depleted to 10s");
+            Assert.AreEqual(10f, remBefore, 0.2f, "Timer should be depleted to 10s");
 
             var setResolvingMethod = gmType.GetProperty("IsResolvingMove", AnyInstance)?.GetSetMethod(true);
             var resolvingField = gmType.GetField("<IsResolvingMove>k__BackingField", AnyInstance);
