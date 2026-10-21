@@ -15,6 +15,7 @@ public sealed class RankedMatchSession
     public int ProtectionGamesLeft { get; private set; }
     public string TierBefore { get; private set; }
     public string TierAfter { get; private set; }
+    public string RankTransitionLabel { get; private set; }
 
     public RankedMatchSession(int opponentRating, bool humanIsRed)
     {
@@ -30,13 +31,24 @@ public sealed class RankedMatchSession
     {
         if (IsCompleted) return false;
         var before = PlayerRankStore.GetProfile();
+        bool wasPlacement = before.IsPlacement;
+        RankTier previousTier = before.currentTier;
+        int previousDivision = before.currentDivision;
         double score = !redWon.HasValue ? 0.5 : redWon.Value == HumanIsRed ? 1.0 : 0.0;
         PlayerRankStore.RecordResult(OpponentRating, score, true);
         var after = PlayerRankStore.GetProfile();
         RankBefore = before.DisplayRank;
         RankAfter = after.DisplayRank;
-        TierBefore = before.currentTier.ToString();
+        TierBefore = previousTier.ToString();
         TierAfter = after.currentTier.ToString();
+        if (wasPlacement)
+            RankTransitionLabel = after.IsPlacement ? null : "Placement complete";
+        else if (after.currentTier > previousTier ||
+            (after.currentTier == previousTier && after.currentDivision < previousDivision))
+            RankTransitionLabel = "Promoted";
+        else if (after.currentTier < previousTier ||
+            (after.currentTier == previousTier && after.currentDivision > previousDivision))
+            RankTransitionLabel = "Demoted";
         RatingAfter = after.rating;
         RatingChange = after.lastChange;
         ProtectionGamesLeft = after.promotionProtectionGamesLeft;
