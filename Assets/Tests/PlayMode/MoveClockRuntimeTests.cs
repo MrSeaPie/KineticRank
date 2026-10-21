@@ -51,6 +51,18 @@ namespace KineticRank.Tests.PlayMode
             {
                 UnityEngine.Object.DestroyImmediate(fixtureRoot);
             }
+            foreach (var go in UnityEngine.Object.FindObjectsOfType<GameObject>())
+            {
+                if (go != null && (go.name.Contains("Fixture") || go.name.Contains("MoveClock") || go.name.Contains("GameManager") || go.name.Contains("PlayerController")))
+                {
+                    UnityEngine.Object.DestroyImmediate(go);
+                }
+            }
+            var gmType = RuntimeType("GameManager");
+            var instProp = gmType.GetProperty("Instance", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            if (instProp != null && instProp.CanWrite) instProp.SetValue(null, null);
+            var instField = gmType.GetField("instance", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) ?? gmType.GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            if (instField != null) instField.SetValue(null, null);
         }
 
         [Test]
