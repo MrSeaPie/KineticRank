@@ -9,12 +9,17 @@ public static class RankedMatchPresentation
         if (session == null) throw new ArgumentNullException(nameof(session));
         if (profile == null) throw new ArgumentNullException(nameof(profile));
 
-        string text = "Ranked Solo | " + profile.DisplayRank + " | Rating " + profile.rating
+        string rank = session.IsCompleted ? session.RankAfter : profile.DisplayRank;
+        int rating = session.IsCompleted ? session.RatingAfter : profile.rating;
+        string text = "Ranked Solo | " + rank + " | Rating " + rating
             + "\nOpponent rating " + session.OpponentRating;
         if (session.IsCompleted)
         {
             int change = session.RatingChange;
             text += " | Rating change " + (change > 0 ? "+" : "") + change;
+            text += "\n" + session.ResultLabel + " | " + session.RankBefore + " → " + session.RankAfter;
+            if (session.ProtectionGamesLeft > 0)
+                text += "\nProtected: " + session.ProtectionGamesLeft + " games left";
         }
         return text;
     }
