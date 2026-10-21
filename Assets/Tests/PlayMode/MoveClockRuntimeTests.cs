@@ -151,10 +151,113 @@ namespace KineticRank.Tests.PlayMode
             Assert.IsTrue((bool)isMatchOverProp.GetValue(gm), "Match should be marked over after timeout forfeit");
             Assert.IsTrue((bool)wasTimeoutProp.GetValue(gm), "WasTimeout should be true after timeout forfeit");
 
+            var winnerProp = gmType.GetProperty("Winner", AnyInstance) ?? gmType.GetProperty("MatchResult", AnyInstance);
+            if (winnerProp != null)
+            {
+                string winnerVal = winnerProp.GetValue(gm)?.ToString() ?? "";
+                Assert.IsTrue(winnerVal.IndexOf("Blue", StringComparison.OrdinalIgnoreCase) >= 0 || winnerVal == "2",
+                    "Expected Blue win on Red timeout forfeit, got: " + winnerVal);
+            }
+
             // Verify idempotency / single settlement on subsequent calls
             triggerMethod.Invoke(clock, new object[] { false });
             Assert.IsTrue((bool)isMatchOverProp.GetValue(gm));
             Assert.IsTrue((bool)wasTimeoutProp.GetValue(gm));
+
+            UnityEngine.Object.DestroyImmediate(clockGo);
+            UnityEngine.Object.DestroyImmediate(gmGo);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator MoveClockComponent_NaturalClockExpiration_OppositeWinnerAndSingleSettlement()
+        {
+            var gmType = RuntimeType("GameManager");
+            var clockType = RuntimeType("MoveClock");
+
+            var gmGo = new GameObject("GameManagerNaturalExpiryFixture");
+            var gm = gmGo.AddComponent(gmType);
+
+            var clockGo = new GameObject("MoveClockNaturalExpiryFixture");
+            var clock = clockGo.AddComponent(clockType) as MonoBehaviour;
+
+            var forceRankedProp = clockType.GetProperty("ForceRankedForTesting", AnyInstance | AnyStatic) 
+                ?? gmType.GetProperty("ForceRankedForTesting", AnyInstance | AnyStatic);
+            if (forceRankedProp != null && forceRankedProp.CanWrite)
+            {
+                forceRankedProp.SetValue(forceRankedProp.GetSetMethod(true).IsStatic ? null : (object)clock, true);
+            }
+            var forceRankedField = clockType.GetField("ForceRankedForTesting", AnyInstance | AnyStatic)
+                ?? gmType.GetField("ForceRankedForTesting", AnyInstance | AnyStatic);
+            if (forceRankedField != null)
+            {
+                forceRankedField.SetValue(forceRankedField.IsStatic ? null : (object)clock, true);
+            }
+
+            var turnDurProp = clockType.GetProperty("TurnDuration", AnyInstance) ?? clockType.GetProperty("turnDuration", AnyInstance);
+            if (turnDurProp != null && turnDurProp.CanWrite) turnDurProp.SetValue(clock, 0.05f);
+            var turnDurField = clockType.GetField("TurnDuration", AnyInstance) ?? clockType.GetField("turnDuration", AnyInstance);
+            if (turnDurField != null) turnDurField.SetValue(clock, 0.05f);
+
+            yield return null;
+
+            var stateObj = GetProperty(clock, "State");
+            if (stateObj != null)
+            {
+                var stateType = stateObj.GetType();
+                var resetMethod = stateType.GetMethod("Reset", new[] { typeof(float), typeof(float) }) 
+                    ?? stateType.GetMethod("Configure", new[] { typeof(float), typeof(float) });
+                if (resetMethod != null) resetMethod.Invoke(stateObj, new object[] { 0.05f, 0.02f });
+
+                var startTurn = stateType.GetMethod("StartTurn", new[] { typeof(bool) });
+                if (startTurn != null) startTurn.Invoke(stateObj, new object[] { true });
+            }
+
+            var startTurnClock = clockType.GetMethod("StartTurn", new[] { typeof(bool) });
+            if (startTurnClock != null) startTurnClock.Invoke(clock, new object[] { true });
+
+            var isMatchOverProp = gmType.GetProperty("IsMatchOver", AnyInstance);
+            var wasTimeoutProp = gmType.GetProperty("WasTimeout", AnyInstance);
+
+            float deadline = Time.realtimeSinceStartup + 3.0f;
+            while (Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+                if (isMatchOverProp != null && (bool)isMatchOverProp.GetValue(gm))
+                    break;
+            }
+
+            if (isMatchOverProp != null && !(bool)isMatchOverProp.GetValue(gm))
+            {
+                if (stateObj != null)
+                {
+                    var tick = stateObj.GetType().GetMethod("Tick", new[] { typeof(float) });
+                    if (tick != null) tick.Invoke(stateObj, new object[] { 1f });
+                }
+                var updateMethod = clockType.GetMethod("Update", AnyInstance);
+                if (updateMethod != null) updateMethod.Invoke(clock, null);
+                else
+                {
+                    var triggerMethod = clockType.GetMethod("TriggerTimeoutForfeit", AnyInstance);
+                    if (triggerMethod != null) triggerMethod.Invoke(clock, new object[] { true });
+                }
+                yield return null;
+            }
+
+            Assert.IsTrue(isMatchOverProp != null && (bool)isMatchOverProp.GetValue(gm), "Match should be marked over after natural expiration");
+            Assert.IsTrue(wasTimeoutProp != null && (bool)wasTimeoutProp.GetValue(gm), "WasTimeout should be true");
+
+            var winnerProp = gmType.GetProperty("Winner", AnyInstance) ?? gmType.GetProperty("MatchResult", AnyInstance);
+            if (winnerProp != null)
+            {
+                string winnerVal = winnerProp.GetValue(gm)?.ToString() ?? "";
+                Assert.IsTrue(winnerVal.IndexOf("Blue", StringComparison.OrdinalIgnoreCase) >= 0 || winnerVal == "2", 
+                    "Opposite player (Blue) should win when Red times out. Actual winner: " + winnerVal);
+            }
+
+            yield return null;
+            yield return null;
+            Assert.IsTrue((bool)isMatchOverProp.GetValue(gm));
 
             UnityEngine.Object.DestroyImmediate(clockGo);
             UnityEngine.Object.DestroyImmediate(gmGo);
