@@ -35,7 +35,20 @@ public class HowToPlayOverlay : MonoBehaviour
     bool restorePending;
     int openedFrame = -1;
 
+    public static HowToPlayOverlay Instance { get; private set; }
+
     public bool IsOpen => panel != null && panel.activeSelf;
+
+    void Awake()
+    {
+        Instance = this;
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
 
     // Self-attaches to any scene that has a BoardManager, so no scene edits are needed
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]

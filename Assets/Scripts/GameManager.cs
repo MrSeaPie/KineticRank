@@ -16,10 +16,12 @@ public class GameManager : MonoBehaviour
     public bool IsMatchOver { get; private set; }
     public bool IsResolvingMove { get; private set; }
     public bool IsInputLocked => IsMatchOver || IsResolvingMove;
+    public bool WasTimeout { get; private set; }
 
     void Awake()
     {
         Instance = this;
+        WasTimeout = false;
         if (backToMenuButton != null) backToMenuButton.SetActive(false);
     }
 
@@ -62,6 +64,13 @@ public class GameManager : MonoBehaviour
         FinishMatch(result);
     }
 
+    public void TimeoutForfeit(bool redTimedOut)
+    {
+        if (IsMatchOver) return;
+        WasTimeout = true;
+        FinishMatch(redTimedOut ? EvaluationResult.BlueWin : EvaluationResult.RedWin);
+    }
+
     void FinishMatch(EvaluationResult result)
     {
         if (IsMatchOver) return;
@@ -83,8 +92,12 @@ public class GameManager : MonoBehaviour
         if (!draw && AudioController.Instance != null) AudioController.Instance.PlayWin(redWins);
         else if (draw && AudioController.Instance != null) AudioController.Instance.PlayDraw();
         if (winBanner != null)
-            winBanner.Show(draw ? "DRAW — both players have four!" : redWins ? "RED wins!" : "BLUE wins!",
-                draw ? Color.white : redWins ? Color.red : Color.cyan);
+        {
+            string bannerText = WasTimeout
+                ? (redWins ? "BLUE timed out — RED wins!" : "RED timed out — BLUE wins!")
+                : (draw ? "DRAW — both players have four!" : redWins ? "RED wins!" : "BLUE wins!");
+            winBanner.Show(bannerText, draw ? Color.white : redWins ? Color.red : Color.cyan);
+        }
         if (backToMenuButton != null) backToMenuButton.SetActive(true);
         StartCoroutine(ShowRematchHint());
     }

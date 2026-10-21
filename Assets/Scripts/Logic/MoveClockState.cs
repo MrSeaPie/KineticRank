@@ -4,80 +4,75 @@ namespace KineticRank.Logic
 {
     public class MoveClockState
     {
-        public const float DefaultTurnDuration = 30f;
-        public const float DefaultWarningThreshold = 10f;
-
-        public float TurnDuration { get; }
-        public float WarningThreshold { get; }
+        public float Duration { get; set; }
+        public float TurnDuration => Duration;
+        public float WarningThreshold { get; set; }
         public float RemainingSeconds { get; private set; }
         public bool IsRunning { get; private set; }
         public bool IsPaused { get; private set; }
-
+        public bool ActiveIsRed { get; private set; }
         public bool IsExpired => RemainingSeconds <= 0f;
-        public bool IsWarning => IsRunning && RemainingSeconds <= WarningThreshold && RemainingSeconds > 0f;
-        public float FractionRemaining => TurnDuration > 0f ? Math.Max(0f, Math.Min(1f, RemainingSeconds / TurnDuration)) : 0f;
+        public bool IsWarning => RemainingSeconds <= WarningThreshold && RemainingSeconds > 0f;
+        public float FractionRemaining => Duration > 0f ? Math.Max(0f, Math.Min(1f, RemainingSeconds / Duration)) : 0f;
 
-        public MoveClockState(float turnDuration = DefaultTurnDuration, float warningThreshold = DefaultWarningThreshold)
+        public MoveClockState(float duration = 30f, float warningThreshold = 10f)
         {
-            if (turnDuration <= 0f)
-                throw new ArgumentOutOfRangeException(nameof(turnDuration), "Turn duration must be greater than zero.");
-            if (warningThreshold < 0f)
-                throw new ArgumentOutOfRangeException(nameof(warningThreshold), "Warning threshold cannot be negative.");
+            if (duration <= 0f) throw new ArgumentOutOfRangeException(nameof(duration), "Duration must be greater than zero.");
+            if (warningThreshold < 0f) throw new ArgumentOutOfRangeException(nameof(warningThreshold), "Warning threshold cannot be negative.");
 
-            TurnDuration = turnDuration;
+            Duration = duration;
             WarningThreshold = warningThreshold;
-            RemainingSeconds = turnDuration;
+            RemainingSeconds = duration;
             IsRunning = false;
+            IsPaused = false;
+            ActiveIsRed = true;
+        }
+
+        public void StartTurn(bool isRed)
+        {
+            ActiveIsRed = isRed;
+            RemainingSeconds = Duration;
+            IsRunning = true;
             IsPaused = false;
         }
 
         public void StartTurn()
         {
-            RemainingSeconds = TurnDuration;
-            IsRunning = true;
-            IsPaused = false;
+            StartTurn(ActiveIsRed);
         }
 
-        public void Stop()
+        public void Reset()
         {
+            RemainingSeconds = Duration;
             IsRunning = false;
             IsPaused = false;
         }
 
         public void Pause()
         {
-            if (IsRunning)
-            {
-                IsPaused = true;
-            }
+            IsPaused = true;
         }
 
         public void Resume()
         {
-            if (IsRunning)
-            {
-                IsPaused = false;
-            }
-        }
-
-        public void Reset()
-        {
-            RemainingSeconds = TurnDuration;
-            IsRunning = false;
             IsPaused = false;
         }
 
-        public bool Tick(float deltaSeconds)
+        public bool Tick(float dt)
         {
-            if (!IsRunning || IsPaused || IsExpired)
-                return false;
-
-            if (deltaSeconds > 0f)
+            if (!IsRunning || IsPaused || IsExpired) return false;
+            RemainingSeconds -= dt;
+            if (RemainingSeconds <= 0f)
             {
-                RemainingSeconds = Math.Max(0f, RemainingSeconds - deltaSeconds);
+                RemainingSeconds = 0f;
+                return true;
             }
+            return false;
+        }
 
-            return IsExpired;
+        public void Update(float dt)
+        {
+            Tick(dt);
         }
     }
 }
