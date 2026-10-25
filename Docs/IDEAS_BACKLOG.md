@@ -1,27 +1,24 @@
 # KineticRank idea backlog
 
-KineticRank was shelved on 2026-10-25. **Start here when you come back:** the first part lists everything that was planned or proposed but isn't built yet, roughly most useful first. The second part is the AI team's original idea-board posts, copied word for word.
+KineticRank was shelved on 2026-10-25, at main `56e4d22`: the move clock and the rank promotion, demotion and placement screens are merged, EditMode 289 passed (14 explicit long runs skipped), and PlayMode 98/98. **Start here when you come back:** the first part lists everything that was planned or proposed but isn't built yet, roughly most useful first. The second part is the AI team's original idea-board posts, copied word for word.
 
 ## Part 1: not built yet
-
-### Finished on a branch, not merged
-These exist on the agents' branches in the mission workspace (`~\.artificial-society\workspaces\mis_0mvay1ep99306a0b2\agents\`). They won't be in a result copy until they're merged.
-- **Move clock** (Agent-03, merge `mrg_0mvi8nvv56dbac9a6`): 30 seconds per move in ranked games, a bar on the side panel, running out of time loses, and the How to play overlay pauses it.
-- **Rank promotion, demotion and placement screens** (Agent-01, merge `mrg_0mvicttyk66f8d7e2`): what you see after a ranked game when your rank changes.
 
 ### Started, not finished
 - **Match history wired into real games** (Agent-01). The move-list records, saving and replay exist and are tested, but the game doesn't record matches yet. It must skip tutorial and puzzle starting positions.
 - **Traditional mode How to play text.** The mode works (menu entry, no Queen or Cleaner, panels show only Normal), but the help screen still describes power-ups.
 - **Bot rating calibration for the top tiers.** Pine 800 and Birch 996 are measured. Oak, Walnut and Ebony use guesses because their matches weren't run (see `RANKED_RATINGS.md`).
-- **Visual re-check of the menu fixes.** The rank panel and the Daily Puzzle streak label were given proper sizes after the 2026-10-20 screenshot check found them squashed. Nobody has looked at them on screen since.
 
 ### Decisions for the owner
 - **Power-up balance: the hoarding edge came back.** With bots looking 4 moves ahead (`FAIRNESS_REPORT_ROUND2_DEPTH4.md`, 49 openings), the style that saves power-ups scored 71.6%, after 68% at depth 2 and 54% at depth 3. Under the 2026-10-20 decision, that's the cue to test a "use it by move N or lose it" variant in the tester before changing the game.
 - **First-move edge:** 56% at depth 2, 63% at depth 3 and 65% at depth 4. Alternating starts are built and wired in; whether a single game needs more is the swap-rule question below.
 - **Rules that online play forces:** who moves first in one online game (best-of-2 or the swap rule), the clock style (per move or per game), and a draw rule for endless recycling. The real game has no move limit; the tester stops games at 160 plies.
 
+### Process gap found during wrap-up
+- **The merge gate runs no tests for this project.** The mission was created without a test command, so merges said "no test command configured" and landed untested. The builder ran the full suites by hand before shelving. When work resumes, set the Unity EditMode and PlayMode run as the mission's test command.
+
 ### Testing never done
-- **Swap rule measurement (tester only):** after the first move, the second player may take over that position. The owner approved measuring it, but it was never run.
+- **Swap rule measurement (tester only):** after the first move, the second player may take over that position. The tests exist (`SwapRule_Depth2/Depth3_TwoPlyNormalOpenings`, explicit), but they've never been run and there are no results yet.
 - **Forced-win probe:** a deep search from the start position to see whether Red can force a win.
 - **Deeper and larger runs:** 4v4 on the full opening sets, and 6v6 if it's fast enough. Depth 4 so far used only 49 openings.
 
