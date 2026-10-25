@@ -1,92 +1,144 @@
-﻿// File: Assets/Scripts/GameManager.cs  (FULL FILE REPLACEMENT)
 using UnityEngine;
-using UnityEngine.UI;      // only for Color
-using System.Collections; // for coroutine delay
+using System.Collections;
+using KineticRank.Logic;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
     [Header("Scene references — drag in Inspector")]
-    public BoardManager     board;
+    public BoardManager board;
     public PlayerController player;
-    public WinBanner        winBanner;
+    public WinBanner winBanner;
+    [Header("UI (optional)")]
+    public GameObject backToMenuButton;
 
-    void Awake() => Instance = this;
+    public bool IsMatchOver { get; private set; }
+    public bool IsResolvingMove { get; private set; }
+    public bool IsInputLocked => IsMatchOver || IsResolvingMove;
+    public bool WasTimeout { get; private set; }
+    public EvaluationResult MatchResult { get; private set; }
+    public string Winner => MatchResult == EvaluationResult.RedWin ? "Red" : MatchResult == EvaluationResult.BlueWin ? "Blue" : MatchResult == EvaluationResult.Draw ? "Draw" : null;
+    RankedMatchSession rankedSession;
 
-    /*====================================================================
-     *  CALLED BY BoardManager **EVERY TIME** a piece is spawned
-     *===================================================================*/
+    void Awake()
+    {
+        Instance = this;
+        WasTimeout = false;
+        MatchResult = EvaluationResult.InProgress;
+        if (SoloSettings.Enabled && SoloSettings.IsRanked && !PuzzleSettings.Enabled && !TraditionalSettings.Enabled)
+            rankedSession = new RankedMatchSession(BotTierRatings.RatingFor(SoloSettings.Tier), !SoloSettings.BotPlaysRed);
+        if (backToMenuButton != null) backToMenuButton.SetActive(false);
+    }
+
+    void Start()
+    {
+        foreach (var hud in FindObjectsOfType<EloHud>())
+            hud.BindRankedSession(rankedSession);
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    public bool TryBeginMove()
+    {
+        if (IsInputLocked) return false;
+        IsResolvingMove = true;
+        return true;
+    }
+
+    public void CompleteMove()
+    {
+        if (IsMatchOver || !IsResolvingMove) return;
+        IsResolvingMove = false;
+        EvaluateBoard();
+    }
+
+    // Legacy notifications cannot finish a move owned by BoardManager.ResolveMove.
     public void OnTokenPlaced(int x, int y, bool isRed)
     {
-        if (ScanAround(x, y, isRed)) { DeclareWinner(isRed); return; }
-        if (ScanWholeBoard(out bool redWon)) { DeclareWinner(redWon); }
+        if (IsInputLocked) return;
+        EvaluateBoard();
     }
 
-    /*──────────────────────────────────────────── helpers ───────────────*/
-
-    #region win detection
-    bool ScanAround(int x, int y, bool red)
+    void EvaluateBoard()
     {
-        Vector2Int[] dirs = { new(1,0), new(0,1), new(1,1), new(1,-1) };
-        foreach (var d in dirs)
-        {
-            int n = 1 + CountDir(x,y, d.x, d.y, red)
-                      + CountDir(x,y,-d.x,-d.y, red);
-            if (n >= 4) return true;
-        }
-        return false;
-    }
-
-    bool ScanWholeBoard(out bool redWon)
-    {
+        if (board == null) return;
+        var grid = new int[board.columns, board.rows];
         for (int x = 0; x < board.columns; ++x)
-        for (int y = 0; y < board.rows;    ++y)
-        {
-            if (board.IsToken(x,y,true)  && ScanAround(x,y,true))  { redWon = true;  return true; }
-            if (board.IsToken(x,y,false) && ScanAround(x,y,false)) { redWon = false; return true; }
-        }
-        redWon = false;
-        return false;
+        for (int y = 0; y < board.rows; ++y)
+            grid[x, y] = board.IsToken(x, y, true) ? 1 : board.IsToken(x, y, false) ? 2 : 0;
+
+        var result = BoardEvaluator.Evaluate(grid);
+        if (result == EvaluationResult.InProgress) return;
+        FinishMatch(result);
     }
 
-    int CountDir(int x,int y,int dx,int dy,bool red)
+    public void TimeoutForfeit(bool redTimedOut)
     {
-        int c = 0;
-        while (true)
-        {
-            x += dx; y += dy;
-            if (!board.InBounds(x,y) || !board.IsToken(x,y,red)) break;
-            ++c;
-        }
-        return c;
+        if (IsMatchOver) return;
+        WasTimeout = true;
+        FinishMatch(redTimedOut ? EvaluationResult.BlueWin : EvaluationResult.RedWin);
     }
-    #endregion
 
-    /*──────────────────────────────────────────── UI / state ────────────*/
-
-    void DeclareWinner(bool red)
+    void FinishMatch(EvaluationResult result)
     {
-        // Update ELO silently
-        SaveManager.RecordMatch(red);
-        EloHud.RefreshAll();
-
-        // Show win text
-        string msg = red ? "RED wins!" : "BLUE wins!";
-        winBanner.Show(msg, red ? Color.red : Color.cyan);
-
-        // Disable input
-        player.enabled = false;
-
-        // NEW: after short delay, append rematch hint
+        if (IsMatchOver) return;
+        IsMatchOver = true;
+        MatchResult = result;
+        IsResolvingMove = false;
+        if (player != null) player.enabled = false;
+        bool draw = result == EvaluationResult.Draw;
+        bool redWins = result == EvaluationResult.RedWin;
+        // An admitted ranked match retains its identity even if menu settings change.
+        if (rankedSession != null)
+        {
+            rankedSession.TryComplete(draw ? (bool?)null : redWins);
+            EloHud.RefreshAll();
+        }
+        else if (PuzzleSettings.Enabled) RecordPuzzleResult(draw, redWins);
+        // Traditional matches are always casual: no save stats, ranked Elo or solo ladder, even against a bot.
+        else if (TraditionalSettings.Enabled) { }
+        else if (SoloSettings.Enabled) RecordSoloResult(draw, redWins);
+        else
+        {
+            if (draw) SaveManager.RecordDraw();
+            else SaveManager.RecordMatch(redWins);
+            EloHud.RefreshAll();
+        }
+        if (!draw && AudioController.Instance != null) AudioController.Instance.PlayWin(redWins);
+        else if (draw && AudioController.Instance != null) AudioController.Instance.PlayDraw();
+        if (winBanner != null)
+        {
+            string bannerText = WasTimeout
+                ? (redWins ? "BLUE timed out — RED wins!" : "RED timed out — BLUE wins!")
+                : (draw ? "DRAW — both players have four!" : redWins ? "RED wins!" : "BLUE wins!");
+            winBanner.Show(bannerText, draw ? Color.white : redWins ? Color.red : Color.cyan);
+        }
+        if (backToMenuButton != null) backToMenuButton.SetActive(true);
         StartCoroutine(ShowRematchHint());
+    }
+
+    // Puzzle results only mark the puzzle solved; ranked Elo and the solo ladder are never touched.
+    static void RecordPuzzleResult(bool draw, bool redWins)
+    {
+        if (!draw && redWins == PuzzleSettings.AttackerIsRed) PuzzleProgress.MarkSolved(PuzzleSettings.CurrentId);
+    }
+
+    // Casual Solo matches go to the separate solo ladder.
+    static void RecordSoloResult(bool draw, bool redWins)
+    {
+        if (draw) { SoloLadder.RecordDraw(SoloSettings.Tier); return; }
+        bool humanWon = redWins != SoloSettings.BotPlaysRed;
+        if (humanWon) SoloLadder.RecordWin(SoloSettings.Tier);
+        else SoloLadder.RecordLoss(SoloSettings.Tier);
     }
 
     IEnumerator ShowRematchHint()
     {
-        yield return new WaitForSeconds(1.5f);
-
-        // append hint only if banner still active
-        winBanner.AppendHint("Press Enter for rematch");
+        yield return new WaitForSecondsRealtime(1.5f);
+        if (winBanner != null) winBanner.AppendHint("Press Enter for rematch");
     }
 }

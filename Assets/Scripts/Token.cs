@@ -3,26 +3,33 @@ using UnityEngine;
 
 public class Token : MonoBehaviour
 {
-    // Public read-only flag BoardManager can poll
     public bool HasArrived { get; private set; }
-
-    // Tune this if you want faster/slower falls
     [SerializeField] float fallSpeed = 20f;
+    [Header("Landing bounce (presentation only)")]
+    [SerializeField] float bounceHeight = 0.12f;
+    [SerializeField] float bounceDuration = 0.14f;
 
     void OnEnable()
     {
         HasArrived = false;
     }
 
+    public void SettleAt(Vector2 targetWorldPos)
+    {
+        StopAllCoroutines();
+        transform.position = targetWorldPos;
+        HasArrived = true;
+    }
+
     public void AnimateFall(Vector2 targetWorldPos)
     {
         StopAllCoroutines();
+        HasArrived = false;
         StartCoroutine(FallTo(targetWorldPos));
     }
 
     IEnumerator FallTo(Vector2 target)
     {
-        // Simple MoveTowards with a hard snap at the end
         var t = transform;
         while ((Vector2)t.position != target)
         {
@@ -31,9 +38,26 @@ public class Token : MonoBehaviour
             );
             yield return null;
         }
-
-        // Ensure exact alignment and mark as arrived
         t.position = target;
+        yield return Bounce(target);
         HasArrived = true;
+    }
+
+    // HasArrived stays false until the bounce settles, so move completion waits for it.
+    IEnumerator Bounce(Vector2 target)
+    {
+        var t = transform;
+        if (bounceDuration > 0f && bounceHeight > 0f)
+        {
+            float elapsed = 0f;
+            while (elapsed < bounceDuration)
+            {
+                elapsed += Time.deltaTime;
+                float k = Mathf.Clamp01(elapsed / bounceDuration);
+                t.position = target + Vector2.up * (bounceHeight * Mathf.Sin(k * Mathf.PI));
+                yield return null;
+            }
+        }
+        t.position = target;
     }
 }

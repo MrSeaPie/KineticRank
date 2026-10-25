@@ -1,4 +1,3 @@
-// File: Assets/Scripts/EloHud.cs  (FULL FILE REPLACEMENT)
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -10,6 +9,8 @@ public class EloHud : MonoBehaviour
     [Tooltip("Leave empty to use TMP on this same GameObject")]
     public TMP_Text label;
 
+    RankedMatchSession rankedSession;
+
     void OnEnable()
     {
         _instances.Add(this);
@@ -19,13 +20,25 @@ public class EloHud : MonoBehaviour
 
     void OnDisable() => _instances.Remove(this);
 
+    public void BindRankedSession(RankedMatchSession session)
+    {
+        rankedSession = session;
+        Refresh();
+    }
+
     public void Refresh()
     {
         if (!label) return;
-        int red  = SaveManager.GetRedElo();
+        if (rankedSession != null)
+        {
+            label.text = RankedMatchPresentation.Format(rankedSession, PlayerRankStore.GetProfile());
+            return;
+        }
+
+        int red = SaveManager.GetRedElo();
         int blue = SaveManager.GetBlueElo();
-        int rw   = SaveManager.GetRedWins();
-        int bw   = SaveManager.GetBlueWins();
+        int rw = SaveManager.GetRedWins();
+        int bw = SaveManager.GetBlueWins();
         label.text = $"RED {red} (W{rw})  |  BLUE {blue} (W{bw})";
     }
 

@@ -1,4 +1,3 @@
-﻿// File: Assets/Scripts/SaveManager.cs  (FULL FILE REPLACEMENT)
 using System;
 using System.IO;
 using UnityEngine;
@@ -6,67 +5,96 @@ using UnityEngine;
 public static class SaveManager
 {
     [Serializable]
-    public class RankedProfile
+    public class RankedProfile : KineticRank.Logic.RankedProfile
     {
-        public int redElo = 1000;
-        public int blueElo = 1000;
-        public int games = 0;
-        public int lastDeltaRed = 0;
-        public int lastDeltaBlue = 0;
-
-        public int redWins = 0;
-        public int blueWins = 0;
     }
 
-    static RankedProfile data;
-    static readonly int kFactor = 32;
-    static string SavePath => Path.Combine(Application.persistentDataPath, "kineticrank_ranked.json");
+    static KineticRank.Logic.RankedProfile data;
+    const int kFactor = 32;
+    static string savePathOverride;
+    static string SavePath => savePathOverride ?? Path.Combine(Application.persistentDataPath, "kineticrank_ranked.json");
 
-    static SaveManager() { Load(); }
+#if UNITY_EDITOR || UNITY_INCLUDE_TESTS
+    // Install isolation before any profile access, including GameManager lifecycle calls.
+    public static IDisposable BeginIsolatedTestScope()
+    {
+        return new IsolatedTestScope();
+    }
 
-    // ───────────────── Public API ─────────────────
+    sealed class IsolatedTestScope : IDisposable
+    {
+        readonly KineticRank.Logic.RankedProfile previousData;
+        readonly string previousPath;
+        readonly string isolatedPath;
+        bool disposed;
+
+        public IsolatedTestScope()
+        {
+            previousData = data;
+            previousPath = savePathOverride;
+            isolatedPath = Path.Combine(Application.temporaryCachePath,
+                "kineticrank_test_" + Guid.NewGuid().ToString("N") + ".json");
+            savePathOverride = isolatedPath;
+            data = null;
+        }
+
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+            data = previousData;
+            savePathOverride = previousPath;
+            try
+            {
+                if (File.Exists(isolatedPath)) File.Delete(isolatedPath);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[SaveManager] Test cleanup failed: {e.Message}");
+            }
+        }
+    }
+#endif
+
     public static void RecordMatch(bool redWon)
     {
         EnsureLoaded();
+        data.RecordMatch(redWon, kFactor);
+        Save();
+    }
 
-        int oldRed = data.redElo;
-        int oldBlue = data.blueElo;
-
-        float expRed  = Expected(oldRed,  oldBlue);
-        float expBlue = Expected(oldBlue, oldRed);
-
-        int sRed  = redWon ? 1 : 0;
-        int sBlue = redWon ? 0 : 1;
-
-        int newRed  = Mathf.RoundToInt(oldRed  + kFactor * (sRed  - expRed));
-        int newBlue = Mathf.RoundToInt(oldBlue + kFactor * (sBlue - expBlue));
-
-        data.lastDeltaRed  = newRed  - oldRed;
-        data.lastDeltaBlue = newBlue - oldBlue;
-        data.redElo  = Mathf.Max(1, newRed);
-        data.blueElo = Mathf.Max(1, newBlue);
-        data.games  += 1;
-
-        if (redWon) data.redWins += 1; else data.blueWins += 1;
-
+    public static void RecordDraw()
+    {
+        EnsureLoaded();
+        data.RecordDraw(kFactor);
         Save();
     }
 
     public static void ResetRanked()
     {
-        data = new RankedProfile();
+        EnsureLoaded();
+        data.ResetRanked(preserveHud: true);
         Save();
     }
 
-    public static int GetRedElo()        { EnsureLoaded(); return data.redElo; }
-    public static int GetBlueElo()       { EnsureLoaded(); return data.blueElo; }
-    public static int GetGames()         { EnsureLoaded(); return data.games; }
-    public static int GetLastDeltaRed()  { EnsureLoaded(); return data.lastDeltaRed; }
+    public static int GetRedElo() { EnsureLoaded(); return data.redElo; }
+    public static int GetBlueElo() { EnsureLoaded(); return data.blueElo; }
+    public static int GetGames() { EnsureLoaded(); return data.games; }
+    public static int GetLastDeltaRed() { EnsureLoaded(); return data.lastDeltaRed; }
     public static int GetLastDeltaBlue() { EnsureLoaded(); return data.lastDeltaBlue; }
-    public static int GetRedWins()       { EnsureLoaded(); return data.redWins; }
-    public static int GetBlueWins()      { EnsureLoaded(); return data.blueWins; }
+    public static int GetRedWins() { EnsureLoaded(); return data.redWins; }
+    public static int GetBlueWins() { EnsureLoaded(); return data.blueWins; }
+    public static int GetDraws() { EnsureLoaded(); return data.draws; }
+    public static bool GetHudVisible() { EnsureLoaded(); return data.hudVisible; }
 
-    // ───────────────── Internals ─────────────────
+    public static void SetHudVisible(bool visible)
+    {
+        EnsureLoaded();
+        if (data.hudVisible == visible) return;
+        data.hudVisible = visible;
+        Save();
+    }
+
     static void EnsureLoaded()
     {
         if (data == null) Load();
@@ -79,19 +107,19 @@ public static class SaveManager
             if (File.Exists(SavePath))
             {
                 var json = File.ReadAllText(SavePath);
-                var loaded = JsonUtility.FromJson<RankedProfile>(json);
-                data = loaded ?? new RankedProfile();
+                var loaded = JsonUtility.FromJson<KineticRank.Logic.RankedProfile>(json);
+                data = loaded ?? new KineticRank.Logic.RankedProfile();
             }
             else
             {
-                data = new RankedProfile();
+                data = new KineticRank.Logic.RankedProfile();
                 Save();
             }
         }
         catch (Exception e)
         {
             Debug.LogWarning($"[SaveManager] Load failed: {e.Message}");
-            data = new RankedProfile();
+            data = new KineticRank.Logic.RankedProfile();
         }
     }
 
@@ -106,11 +134,5 @@ public static class SaveManager
         {
             Debug.LogWarning($"[SaveManager] Save failed: {e.Message}");
         }
-    }
-
-    static float Expected(int ra, int rb)
-    {
-        float expo = (rb - ra) / 400f;
-        return 1f / (1f + Mathf.Pow(10f, expo));
     }
 }

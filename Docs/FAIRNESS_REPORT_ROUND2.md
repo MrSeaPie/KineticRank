@@ -1,0 +1,230 @@
+# Fairness tester round 2: style round-robin
+
+Task: tsk_0mvg54t6u22af8c59 (brief: `Docs/FAIRNESS_BRIEF_ROUND2.md`). Round 1 results: `Docs/FAIRNESS_REPORT.md`. Depth-3 run on the depth-2 openings: `Docs/FAIRNESS_REPORT_ROUND2_DEPTH3_TWOPLY.md`.
+
+## Summary for the owner (depth 2 and depth 3; the forced-win probe and 4v4 are still pending)
+
+Everything below comes from bot-vs-bot play at depths 2 and 3. It describes these bots, not perfect play or human play. Nothing here is proven; the forced-win probe is the only part of the brief that can prove a result.
+
+- **Is there a first-player edge?** Yes, for these bots, and it grew with deeper search. On the same 441 two-ply openings, Red (who always moves first) won 56.0 % of decisive games at depth 2 (4763 of 8502) and 63.4 % at depth 3 (6875 of 10838). On the three-ply Normal openings at depth 3 it was 58.6 %. All are above your 45-55 % target.
+- **Is there a dominant style?** Not clearly. At depth 2 Hoarder (saves Queen and Cleaner) beat every other style (68.2 % overall). On the same openings at depth 3 that lead disappears: Default 57.2 %, Positional 55.2 %, Attacker 54.6 %, Hoarder 53.6 %, Spender 29.4 %. Default wins all four of its head-to-heads, but against the three middle styles only by 51-53 %, which is within about 1.5 sigma. We saw no rock-paper-scissors cycle. Spender (uses power-ups early) lost to everyone at every depth. My reading is that spending power-ups early is a weak policy, not that holding them is overpowered.
+- **Do Queen or Cleaner decide too many games?** Probably not directly. At depth 2 a Queen drop completed the winning line in 585 of 8502 decisive games (6.9 %). Almost every side used a Queen at some point, so "the winner used a Queen" says little. What matters is *when* power-ups are used.
+- **Smallest change I'd recommend:** alternate who starts, or play ranked as best-of-2 with each player starting once (Design 3). This removes the first-move edge from ranked results without changing any rule, and the depth-3 data makes the case stronger than before. I would not change the power-ups based on this data. Draws are rare at depth 3 (1.7 % on two-ply openings, 0.5 % on three-ply Normal openings), and only 4 games hit the ply cap in each depth-3 run. Real matches still have no move limit, and whether that should change is your decision.
+
+Harness: `Assets/Scripts/Logic/StyleRoundRobin.cs` (built on `StyledSelfPlay`, which is unchanged). Tests: `Assets/Tests/EditMode/StyleRoundRobinTests.cs`.
+
+Per-game stats: `Assets/Scripts/Logic/StyledGameRecorder.cs`. Tests: `Assets/Tests/EditMode/StyledGameRecorderTests.cs`.
+
+Extended per-game CSV rows: `Assets/Scripts/Logic/StyledGameCsv.cs`. Tests: `Assets/Tests/EditMode/StyledGameCsvTests.cs`.
+
+CSV run and power-up/draw aggregation: `Assets/Tests/EditMode/FairnessCsvRunTests.cs` (`PowerUpSummary`).
+
+## Method
+
+- Styles: `BotStyle.All` = Default, Positional, Hoarder, Spender, Attacker (see `BotStyle.cs`).
+  - Default adds nothing to `Bot.Evaluate`, so it plays exactly like `Bot`.
+  - Positional: +6 per own token in the centre column, minus the opponent's.
+  - Hoarder: +25 per own unused power-up, and a -20 root bias against Queen and Cleaner moves.
+  - Spender: -15 per own unused power-up, and a +20 root bias towards Queen and Cleaner moves.
+  - Attacker: +4 per open-2/open-3 threat point (`StyledBot.ThreatPoints`), minus the opponent's.
+- Every unordered pair of styles, plus each style against itself (mirror). Non-mirror pairings play every opening twice, once with each style as Red. Red always moves first, so Red wins = first-mover wins.
+- Both sides search at the same depth. Ties between equal-best moves are broken by a seeded `System.Random` (game i uses seed 1000 + i; both colour orders reuse the same seeds). Same inputs give identical results.
+- Openings: the depth-2 run and the depth-3 two-ply run use `StyledSelfPlay.TwoPlyOpenings()` (Normal/Queen/Cleaner, up to 441). The depth-3 three-ply run uses `ThreePlyNormalOpenings()` (up to 343). The opening moves are fixed; the bots only choose from the first ply after the opening.
+- Ply cap 160. Capped games count as draws and are reported separately. "Repetition games" = games where some position occurred 3 or more times.
+- Bot: uncached `StyledBot`. `CachedStyledBot` picks the same moves (see TranspositionTableTests) and can be swapped in later for speed.
+
+## Per-game stats (brief items 6 and 7)
+
+`StyledGameRecord` replays a game with the same opening, styles and seed as `StyledSelfPlay`, and its Result/Plies/Capped match `PlayGame` and `Run` (pinned by `StyledGameRecorderTests`). Each record can be written as one CSV row; the header is `StyledGameRecord.CsvHeader`:
+
+| Column | Meaning |
+| --- | --- |
+| `red_style`, `blue_style` | Style names |
+| `seed` | Tie-break seed (empty when unseeded) |
+| `result` | `EvaluationResult` of the final position |
+| `plies` | Total plies, including the opening moves |
+| `draw_kind` | `None` (someone won), `Cap` (ply limit reached) or `Rules` (a draw the rules declared) |
+| `final_move_kind` | Kind of the move that completed the winning line (empty for draws) |
+| `red_queen_plies`, `red_cleaner_plies`, `blue_queen_plies`, `blue_cleaner_plies` | 1-based plies where that side used the power-up, separated by `;` |
+| `winner_used_queen`, `winner_used_cleaner` | `1` if the winner used that power-up at least once, else `0` |
+
+### Extended rows (`StyledGameCsv`)
+
+`StyledGameCsv.Header` puts four columns in front of `StyledGameRecord.CsvHeader`; the rest of each row is exactly `record.ToCsvRow()`. `StyledGameCsv.Row(game, record, redDepth, blueDepth)` throws if the `StyledGame` and the record describe different games; `PlayRow` plays and records in one call.
+
+| Column | Meaning |
+| --- | --- |
+| `opening` | Opening moves as `Kind@Column`, separated by `;` (`StyledGameCsv.OpeningCell`; `ParseOpening` reads it back) |
+| `red_depth`, `blue_depth` | Search depth of each side |
+| `max_repeats` | Highest number of times any position occurred in the game (`StyledGame.MaxRepeats`) |
+
+## How to run
+
+The long runs are `[Explicit]` and do not run in the normal EditMode pass. From the project root (verified for depth 2 on 2026-10-20: the result XML shows the test case with `runstate="Explicit"`, `result="Passed"`, about 31 s, and the table below in its output):
+
+```
+"C:\Program Files\Unity\Hub\Editor\2022.3.62f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testFilter "KineticRank.Tests.EditMode.StyleRoundRobinTests.RoundRobin_Depth2_TwoPlyOpenings" -testResults TestResults/fairness_round2.xml -logFile TestResults/fairness_round2.log
+```
+
+Depth 3 (verified on 2026-10-20: `result="Passed"`, about 168 s):
+
+```
+"C:\Program Files\Unity\Hub\Editor\2022.3.62f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testFilter "KineticRank.Tests.EditMode.StyleRoundRobinTests.RoundRobin_Depth3_ThreePlyNormalOpenings" -testResults TestResults/fairness_round2_depth3.xml -logFile TestResults/fairness_round2_depth3.log
+```
+
+Depth 3 on the depth-2 two-ply openings (verified on 2026-10-20: exit 0):
+
+```
+"C:\Program Files\Unity\Hub\Editor\2022.3.62f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testFilter "KineticRank.Tests.EditMode.StyleRoundRobinTests.RoundRobin_Depth3_TwoPlyOpenings" -testResults TestResults/fairness_round2_depth3_twoply.xml -logFile TestResults/fairness_round2_depth3_twoply.log
+```
+
+Output: `TestResults/fairness_round2_depth2.txt` / `fairness_round2_depth3.txt` / `fairness_round2_depth3_twoply.txt`, a Markdown table that can be pasted below.
+
+Per-game CSV plus summary (round-robin table and power-up/draw tables), depth 2. Verified on 2026-10-20 (exit 0, summary written):
+
+```
+"C:\Program Files\Unity\Hub\Editor\2022.3.62f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testFilter "KineticRank.Tests.EditMode.FairnessCsvRunTests.Csv_Depth2_TwoPlyOpenings" -testResults TestResults/fairness_round2_csv.xml -logFile TestResults/fairness_round2_csv.log
+```
+
+Batch runs may touch `ProjectSettings/ProjectSettings.asset`; restore it with `git restore -- ProjectSettings/ProjectSettings.asset` before committing.
+
+## Observed results
+
+### Depth 2, two-ply openings (run 2026-10-20)
+
+Copied unchanged from the test output in `TestResults/fairness_round2.xml`.
+
+Style round-robin: depth 2, 441 openings, seedBase 1000, ply cap 160
+
+| A | B | Games | A wins | B wins | Draws (capped) | First-mover wins | Second-mover wins | Repetition games |
+|---|---|---|---|---|---|---|---|---|
+| Default | Default | 441 | 197 | 136 | 108 (5) | 197 (44.7 %) | 136 (30.8 %) | 7 |
+| Default | Positional | 882 | 341 | 343 | 198 (8) | 391 (44.3 %) | 293 (33.2 %) | 8 |
+| Default | Hoarder | 882 | 215 | 454 | 213 (10) | 403 (45.7 %) | 266 (30.2 %) | 12 |
+| Default | Spender | 882 | 525 | 169 | 188 (9) | 362 (41.0 %) | 332 (37.6 %) | 13 |
+| Default | Attacker | 882 | 342 | 321 | 219 (13) | 393 (44.6 %) | 270 (30.6 %) | 15 |
+| Positional | Positional | 441 | 188 | 150 | 103 (2) | 188 (42.6 %) | 150 (34.0 %) | 2 |
+| Positional | Hoarder | 882 | 221 | 460 | 201 (10) | 412 (46.7 %) | 269 (30.5 %) | 11 |
+| Positional | Spender | 882 | 554 | 188 | 140 (12) | 364 (41.3 %) | 378 (42.9 %) | 12 |
+| Positional | Attacker | 882 | 358 | 329 | 195 (11) | 390 (44.2 %) | 297 (33.7 %) | 11 |
+| Hoarder | Hoarder | 441 | 171 | 104 | 166 (6) | 171 (38.8 %) | 104 (23.6 %) | 8 |
+| Hoarder | Spender | 882 | 648 | 89 | 145 (10) | 383 (43.4 %) | 354 (40.1 %) | 12 |
+| Hoarder | Attacker | 882 | 452 | 207 | 223 (16) | 404 (45.8 %) | 255 (28.9 %) | 18 |
+| Spender | Spender | 441 | 154 | 168 | 119 (8) | 154 (34.9 %) | 168 (38.1 %) | 9 |
+| Spender | Attacker | 882 | 167 | 520 | 195 (8) | 353 (40.0 %) | 334 (37.9 %) | 11 |
+| Attacker | Attacker | 441 | 198 | 133 | 110 (4) | 198 (44.9 %) | 133 (30.2 %) | 5 |
+| All | All | 11025 | - | - | 2523 (132) | 4763 (43.2 %) | 3739 (33.9 %) | 154 |
+
+Derived from the table (arithmetic only, cross-style games only, 3528 games per style, score = wins + half of draws):
+
+| Style | Wins | Losses | Draws | Score |
+|---|---|---|---|---|
+| Hoarder | 2014 | 732 | 782 | 68.2 % |
+| Positional | 1476 | 1318 | 734 | 52.2 % |
+| Default | 1423 | 1287 | 818 | 51.9 % |
+| Attacker | 1377 | 1319 | 832 | 50.8 % |
+| Spender | 613 | 2247 | 668 | 26.8 % |
+
+Other figures from the table:
+
+- Decisive games: 8502 of 11025. Red (first mover) won 4763 of them (56.0 %).
+- Draws: 2523 (22.9 %), of which 132 hit the ply cap. 154 games had a position repeated 3 or more times.
+- In 4 of 5 mirror pairings Red won more than Blue. The exception is Spender vs Spender (154 Red, 168 Blue).
+- Head-to-head, Hoarder won more games than its opponent in all 4 of its cross-style pairings, and Spender lost all 4 of its cross-style pairings. Default, Positional and Attacker each beat Spender and lost to Hoarder; among themselves the margins are small (Default-Positional 341-343, Default-Attacker 342-321, Positional-Attacker 358-329).
+
+### Depth 2: power-ups and draw breakdown (run 2026-10-20)
+
+From `PowerUpSummary` over the per-game CSV of the same 11025 games (`FairnessCsvRunTests.Csv_Depth2_TwoPlyOpenings`). Percentages are arithmetic on the counts.
+
+| Draw kind | Games |
+|---|---|
+| None (decisive) | 8502 |
+| Rules (declared by the rules) | 2391 |
+| Cap (160-ply limit) | 132 |
+
+| Decisive games (8502) | Games | Share |
+|---|---|---|
+| Winning line completed by a Queen drop | 585 | 6.9 % |
+| Winner used a Queen at least once | 7421 | 87.3 % |
+| Winner used a Cleaner at least once | 6370 | 74.9 % |
+
+| Style | Sides that used a Queen | Mean first Queen ply |
+|---|---|---|
+| Spender | 100 % | 3.3 |
+| Attacker | 97.5 % | about 7.4 |
+| Default | 97.1 % | about 7.4 |
+| Positional | 96.4 % | about 7.4 |
+| Hoarder | 76.7 % | 10.3 |
+
+- Of 22050 sides (2 per game), 14700 (66.7 %) first used a power-up in plies 1-2, and 659 (3.0 %) never used one. These plies 1-2 uses are all forced by the openings (see inference 5), and the mean first-Queen plies above include them.
+- Repetition games (some position 3 or more times): 154 (1.4 %), from the round-robin table above.
+
+### Depth 3, three-ply Normal openings (run 2026-10-20)
+
+`RoundRobin_Depth3_ThreePlyNormalOpenings`: `TestResults/fairness_round2_depth3.xml` shows `result="Passed"` (total 1, passed 1, 167.5 s). 343 openings, seedBase 1000, ply cap 160, 8575 games. The table is copied unchanged from the test output (`TestResults/fairness_round2_depth3.txt`); the figures after it are arithmetic on the table.
+
+Style round-robin: depth 3, 343 openings, seedBase 1000, ply cap 160
+
+| A | B | Games | A wins | B wins | Draws (capped) | First-mover wins | Second-mover wins | Repetition games |
+|---|---|---|---|---|---|---|---|---|
+| Default | Default | 343 | 200 | 140 | 3 (0) | 200 (58.3 %) | 140 (40.8 %) | 0 |
+| Default | Positional | 686 | 356 | 322 | 8 (1) | 356 (51.9 %) | 322 (46.9 %) | 1 |
+| Default | Hoarder | 686 | 324 | 360 | 2 (0) | 400 (58.3 %) | 284 (41.4 %) | 0 |
+| Default | Spender | 686 | 457 | 228 | 1 (0) | 439 (64.0 %) | 246 (35.9 %) | 0 |
+| Default | Attacker | 686 | 360 | 322 | 4 (0) | 388 (56.6 %) | 294 (42.9 %) | 0 |
+| Positional | Positional | 343 | 164 | 173 | 6 (0) | 164 (47.8 %) | 173 (50.4 %) | 0 |
+| Positional | Hoarder | 686 | 330 | 354 | 2 (0) | 375 (54.7 %) | 309 (45.0 %) | 0 |
+| Positional | Spender | 686 | 453 | 231 | 2 (0) | 432 (63.0 %) | 252 (36.7 %) | 0 |
+| Positional | Attacker | 686 | 342 | 338 | 6 (1) | 346 (50.4 %) | 334 (48.7 %) | 1 |
+| Hoarder | Hoarder | 343 | 207 | 133 | 3 (1) | 207 (60.3 %) | 133 (38.8 %) | 1 |
+| Hoarder | Spender | 686 | 456 | 229 | 1 (0) | 438 (63.8 %) | 247 (36.0 %) | 0 |
+| Hoarder | Attacker | 686 | 362 | 321 | 3 (0) | 392 (57.1 %) | 291 (42.4 %) | 0 |
+| Spender | Spender | 343 | 252 | 91 | 0 (0) | 252 (73.5 %) | 91 (26.5 %) | 0 |
+| Spender | Attacker | 686 | 247 | 436 | 3 (1) | 428 (62.4 %) | 255 (37.2 %) | 1 |
+| Attacker | Attacker | 343 | 185 | 157 | 1 (0) | 185 (53.9 %) | 157 (45.8 %) | 0 |
+| All | All | 8575 | - | - | 45 (4) | 5002 (58.3 %) | 3528 (41.1 %) | 4 |
+
+- Draws: 45 (0.5 %), of which 4 hit the ply cap.
+- First mover won 5002 games (58.3 % of all games, 58.6 % of decisive games); second mover won 3528.
+- First-mover win share in the mirror pairings ranges from 47.8 % (Positional vs Positional) to 73.5 % (Spender vs Spender).
+
+Cross-style scores (win = 1, draw = 0.5, mirrors excluded, 2744 games per style):
+
+| Style | Score (depth 3) | Score (depth 2, for comparison) |
+|---|---|---|
+| Hoarder | 56.0 % | 68.2 % |
+| Default | 54.8 % | 51.9 % |
+| Positional | 53.1 % | 52.2 % |
+| Attacker | 51.9 % | 50.8 % |
+| Spender | 34.2 % | 26.8 % |
+
+Head-to-head for Hoarder at depth 3: 52.6 % vs Default, 51.7 % vs Positional, 53.0 % vs Attacker, 66.5 % vs Spender. Spender scores 33-36 % against every style. So again there is no rock-paper-scissors cycle, but Hoarder's edge over the three middle styles is narrow.
+
+**Caveat:** this run and the depth-2 run use different opening sets (three-ply Normal-only vs two-ply openings that include forced power-up drops), so the differences between them cannot be attributed to search depth alone. The next section removes that confound.
+
+### Depth 3, two-ply openings (same openings as depth 2, run 2026-10-20)
+
+`RoundRobin_Depth3_TwoPlyOpenings`: 441 openings, seedBase 1000, ply cap 160, 11025 games, exit 0. The full per-pairing table (copied unchanged from `TestResults/fairness_round2_depth3_twoply.txt`), the same-openings depth-2 vs depth-3 table and the labelled inferences are in `Docs/FAIRNESS_REPORT_ROUND2_DEPTH3_TWOPLY.md`. Headline figures (arithmetic on that table):
+
+| Figure | Depth 2 | Depth 3 |
+|---|---|---|
+| First-mover share of decisive games | 56.0 % | 63.4 % |
+| Draws | 22.9 % (132 capped) | 1.7 % (4 capped) |
+| Hoarder score | 68.2 % | 53.6 % |
+| Default score | 51.9 % | 57.2 % |
+| Positional score | 52.2 % | 55.2 % |
+| Attacker score | 50.8 % | 54.6 % |
+| Spender score | 26.8 % | 29.4 % |
+
+## Inferences
+
+These are inferences from bot-vs-bot play at depths 2 and 3. They do not prove anything about perfect play or human play. Only the forced-win probe (separate subtask) can prove a result. The puzzle checks in `PuzzleVerifier` cover only the 10 `PuzzlePack` scenarios and are not an opening probe.
+
+1. **First-move edge (likely real for these bots, size unknown for humans).** On the same openings, Red won 56.0 % of decisive games at depth 2 and 63.4 % at depth 3; on three-ply Normal openings at depth 3, 58.6 %. The edge grew with deeper search, apparently because depth-2 draws became decisive games that mostly went to the first mover. This supports Design 3's alternating starts / best-of-2 for ranked play.
+2. **Power-ups are not a free win.** The style that spends Queen and Cleaner eagerly (Spender) scored worst against every style at both depths. Hoarder's depth-2 dominance disappears at depth 3 on the same openings (68.2 % to 53.6 %), so it looks like a shallow-search artefact rather than evidence that holding power-ups is overpowered. Bots may still time power-ups badly, and a human may do better.
+3. **No clearly dominant style at depth 3.** Default, Positional, Attacker and Hoarder sit within about 4 points of each other on the same openings. Default's 51-53 % head-to-head edges are within about 1.5 sigma, so not clearly significant. Only the eager power-up policy moved the score a lot.
+4. **Few endless games.** 132 of 11025 games (1.2 %) at depth 2 and 4 games in each depth-3 run reached the 160-ply cap. The shift rule does not commonly produce endless loops for these bots.
+5. **The plies 1-2 power-up count at depth 2 is forced by the openings (verified from code).** `StyledSelfPlay.TwoPlyOpenings()` fixes plies 1-2 in every game, and the bot never chooses those plies. With 7 columns x 3 kinds per ply, 14 of 21 choices per side are Queen or Cleaner. That gives 441 openings x 25 pairings = 11025 games and exactly 14700 of 22050 sides.
+6. **"Winner used a Queen" is not evidence that the Queen decides games.** Nearly every side used one, and Hoarder used it least yet won most at depth 2. Only 6.9 % of depth-2 wins were completed by the Queen drop itself.
+
+Open questions: whether the opening position is a forced win (forced-win probe), whether the trends continue at depth 4 (the run awaits owner approval of its command), and the 4v4 match-up from the brief (plus 6v6 if time allows).
