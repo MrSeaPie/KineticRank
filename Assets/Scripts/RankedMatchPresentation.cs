@@ -18,6 +18,8 @@ public static class RankedMatchPresentation
             int change = session.RatingChange;
             text += " | Rating change " + (change > 0 ? "+" : "") + change;
             text += "\n" + session.ResultLabel + " | " + session.RankBefore + " → " + session.RankAfter;
+            if (!string.IsNullOrEmpty(session.RankTransitionLabel))
+                text += "\n" + session.RankTransitionLabel + ": " + session.RankAfter;
             if (session.ProtectionGamesLeft > 0)
                 text += "\nProtected: " + session.ProtectionGamesLeft + " games left";
         }
